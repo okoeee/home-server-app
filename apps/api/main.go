@@ -1,16 +1,16 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"api/router"
+	"log"
+)
 
 func main() {
 
-	router := gin.Default()
+	err := router.NewRouter().Run()
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	router.Run()
 }
