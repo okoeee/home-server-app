@@ -1,7 +1,7 @@
 package router
 
 import (
-	"net/http"
+	"api/handler"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,9 +9,7 @@ import (
 func NewRouter() *gin.Engine {
 	router := gin.Default()
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
-	})
+	router.GET("/ping", handler.Ping)
 
 	return router
 }
