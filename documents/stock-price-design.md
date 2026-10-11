@@ -34,6 +34,8 @@ J-Quants API → Go → MySQL → Go API → クライアント
 
 テーブル定義は`apps/database/mysql/init/table_schema.sql`で管理する。
 
+`apps/database/mysql/init/table_seed.sql`には、動作確認用のサンプルデータを1件だけ定義する。この値は実際の株価ではない。
+
 ## 最初に作成するAPI
 
 ```text
