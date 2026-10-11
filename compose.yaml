@@ -18,5 +18,13 @@ services:
     ports:
       - "4306:3306"
 
+  sqlc:
+    image: sqlc/sqlc:1.31.1
+    working_dir: /src/apps/api
+    volumes:
+      - .:/src
+    profiles:
+      - tools
+
 volumes:
   mysql-data:
