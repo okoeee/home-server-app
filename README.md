@@ -19,21 +19,31 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   └── workflows/
 │       └── api-ci.yaml
 ├── apps/
-│   └── api/
-│       ├── Dockerfile
-│       ├── go.mod
-│       ├── go.sum
-│       ├── handler/
-│       │   └── ping.go
-│       ├── main.go
-│       └── router/
-│           ├── router.go
-│           └── router_test.go
+│   ├── api/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── handler/
+│   │   │   └── ping.go
+│   │   ├── main.go
+│   │   └── router/
+│   │       ├── router.go
+│   │       └── router_test.go
+│   └── database/
+│       └── mysql/
+│           └── init/
+│               ├── table_schema.sql
+│               └── table_seed.sql
+├── documents/
+│   └── stock-price-design.md
 ├── scripts/
-│   └── deploy.sh
+│   ├── deploy.sh
+│   └── gen_sqlc.sh
 ├── compose.yaml
 └── README.md
 ```
+
+株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
 
 ## テスト
 

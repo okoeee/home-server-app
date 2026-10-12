@@ -1,15 +1,24 @@
 package router
 
 import (
-	"fmt"
+	"api/db"
+	"api/handler"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
+type fakeQuerier struct{}
+
+func (fakeQuerier) ListDailyPricesBySymbol(context.Context, string) ([]db.DailyPrice, error) {
+	return nil, nil
+}
+
 func TestPing(t *testing.T) {
 
-	engine := NewRouter()
+	stockHandler := handler.NewStockHandler(fakeQuerier{})
+	engine := NewRouter(stockHandler)
 
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/ping", nil)
@@ -21,8 +30,6 @@ func TestPing(t *testing.T) {
 	}
 
 	want := `{"message":"pong"}`
-
-	fmt.Print(recorder.Body.String())
 
 	if got := recorder.Body.String(); got != want {
 		t.Fatalf("body = %q, want %q", got, want)
