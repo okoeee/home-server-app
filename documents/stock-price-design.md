@@ -1,46 +1,286 @@
-# 株価データ設計
+# 今日の値動き注目株 設計
 
 ## 目的
 
-国内株式の日足を保存し、新高値などの分析に利用する。
+東証普通株を対象に、取引終了後の日足から、普段より値動きと売買が活発だった10銘柄を抽出する。
 
-## データ取得元
+本機能は当日の市場を振り返るためのものであり、将来の株価予測や売買推奨を目的としない。
 
-[J-Quants API](https://jpx-jquants.com/) v2の株価四本値を使用する。
+## バージョン1の範囲
 
-J-Quants APIから、証券コード、取引日、始値、高値、安値、終値、出来高を取得できる。株式分割などの影響を避けるため、価格と出来高は調整済みの値を保存する。
+- 日足だけを使う。
+- 上昇と下落の両方を対象にする。
+- ニュース、決算、適時開示、OpenAI APIは使わない。
+- 算出条件は初期仮説としてバージョン管理する。
 
 ## データの流れ
 
 ```text
-J-Quants API → Go → MySQL → Go API → クライアント
+J-Quants API
+    ↓
+銘柄マスターと日足をMySQLへ保存
+    ↓
+分析対象を絞り込む
+    ↓
+指標と注目度を計算
+    ↓
+上位10銘柄と算出根拠を保存
+    ↓
+Go APIから返す
 ```
 
-## テーブル
+## データ取得元
 
-`daily_prices`に1銘柄・1取引日につき1件の日足を保存する。
+[J-Quants API](https://jpx-jquants.com/) v2を使用する。
 
-| カラム | 内容 |
+### 銘柄マスター
+
+分析対象の判定と画面表示に、次の情報を使用する。
+
+| 項目 | 用途 |
 | --- | --- |
-| `symbol` | 証券コード |
-| `trade_date` | 取引日 |
-| `open_price` | 調整済み始値 |
-| `high_price` | 調整済み高値 |
-| `low_price` | 調整済み安値 |
-| `close_price` | 調整済み終値 |
-| `volume` | 調整済み出来高 |
+| 証券コード | 銘柄の識別 |
+| 会社名 | 画面表示 |
+| 市場区分 | Prime、Standard、Growthの表示 |
+| 商品区分 | 普通株とETF・REITなどの区別 |
+| 33業種 | 業種の表示 |
+| 適用日 | 対象日時点の銘柄情報の判定 |
 
-`symbol`と`trade_date`を複合主キーとし、同じ銘柄・取引日の重複を防ぐ。
+### 株価日足
 
-テーブル定義は`apps/database/mysql/init/table_schema.sql`で管理する。
+| 項目 | 用途 |
+| --- | --- |
+| 取引日 | 対象日の特定 |
+| 証券コード | 銘柄マスターとの紐付け |
+| 調整済み始値 | 日足の保存 |
+| 調整済み高値 | 値幅と高値更新の計算 |
+| 調整済み安値 | 値幅と安値更新の計算 |
+| 調整済み終値 | 騰落率の計算 |
+| 調整済み出来高 | 出来高倍率の計算 |
+| 売買代金 | 流動性の判定 |
+| 調整係数 | 株式分割などの確認 |
+| 取得日時 | 取得処理の確認 |
 
-`apps/database/mysql/init/table_seed.sql`には、動作確認用のサンプルデータを1件だけ定義する。この値は実際の株価ではない。
+価格推移の比較には、株式分割などの影響を避けるため調整済みの値を使う。流動性の判定には売買代金を使う。
 
-## 最初に作成するAPI
+## 取得期間
+
+算出には、対象日と過去20営業日の日足が必要になる。
 
 ```text
-GET /stocks/:symbol/prices
+初回取得: 過去60営業日程度
+日次取得: 当日の1営業日分
 ```
 
-指定した証券コードの日足を取引日の昇順で返す。
+60営業日は、欠損への対応と将来の指標追加に備えた初期値とする。
 
+## 更新タイミング
+
+J-Quantsの公式情報では、株価四本値は日次で16:30 JST、上場銘柄情報は日次で17:30 JSTに更新される。
+
+- [株価四本値](https://pro.jpx-jquants.com/datasets/9)
+- [上場銘柄情報](https://pro.jpx-jquants.com/datasets/4)
+
+契約プランによって提供の遅延が異なるため、当日データを取得できるプランを前提とする。
+
+自宅サーバーでは営業日の18:00 JST以降に次の順序で実行する。
+
+```text
+1. 銘柄マスターを取得する。
+2. 当日の日足を取得する。
+3. 取得した日付と件数を確認する。
+4. 注目度を計算する。
+5. 上位10銘柄を保存して公開する。
+```
+
+非営業日は処理しない。取得した最新日が期待する取引日と一致しない場合も、その日のランキングを作成しない。
+
+## 分析対象
+
+次の条件をすべて満たす銘柄を対象にする。
+
+- 東証上場の普通株である。
+- 対象日時点で上場中である。
+- 当日の日足と出来高が存在する。
+- 前営業日の終値が存在する。
+- 過去20営業日分の日足が存在する。
+- 過去20営業日の平均売買代金が1億円以上である。
+
+平均売買代金1億円は、低流動性銘柄を除くための暫定値であり、検証後に変更できるようにする。
+
+## 算出ロジック
+
+対象日を`t`とし、過去の平均や最高値には対象日を含めない。
+
+### 絶対騰落率
+
+```text
+daily_return = adjusted_close[t] / adjusted_close[t-1] - 1
+absolute_daily_return = abs(daily_return)
+```
+
+上昇、下落、変化なしの方向も保存する。
+
+### 出来高倍率
+
+```text
+volume_ratio =
+    adjusted_volume[t]
+    / average(adjusted_volume[t-20 ... t-1])
+```
+
+### 日中値幅率
+
+```text
+intraday_range_percent =
+    (adjusted_high[t] - adjusted_low[t])
+    / adjusted_close[t-1]
+```
+
+### 20日高値・安値更新
+
+```text
+previous_20_day_high = max(adjusted_high[t-20 ... t-1])
+previous_20_day_low  = min(adjusted_low[t-20 ... t-1])
+```
+
+```text
+up:   adjusted_close[t] > previous_20_day_high
+down: adjusted_close[t] < previous_20_day_low
+none: いずれにも該当しない
+```
+
+## スコアリング
+
+絶対騰落率、出来高倍率、日中値幅率を、当日の分析対象銘柄内で0から100のパーセンタイルスコアへ変換する。
+
+```text
+price_move_score
+volume_score
+range_score
+```
+
+20日高値または安値を更新した場合は`breakout_score`を100、更新していない場合は0とする。
+
+バージョン1の注目度は次の式で計算する。
+
+```text
+attention_score =
+    price_move_score * 0.35
+  + volume_score     * 0.30
+  + range_score      * 0.20
+  + breakout_score   * 0.15
+```
+
+この式と重みは、既存文献をそのまま再現したものではなく初期仮説である。`algorithm_version`として`v1`を保存する。
+
+## 順位
+
+次の優先順位で並べ、先頭10件を採用する。
+
+```text
+1. attention_scoreの降順
+2. volume_ratioの降順
+3. 20日平均売買代金の降順
+4. 証券コードの昇順
+```
+
+同じ入力とアルゴリズムから、常に同じ結果になるようにする。
+
+## 保存する結果
+
+ランキングの実行単位を保存する。
+
+```text
+screening_runs
+├── id
+├── target_date
+├── algorithm_version
+├── started_at
+├── completed_at
+├── eligible_stock_count
+└── status
+```
+
+フィルター通過後の全銘柄について、計算値と順位を保存する。
+
+```text
+screening_candidates
+├── screening_run_id
+├── symbol
+├── daily_return
+├── volume_ratio
+├── intraday_range_percent
+├── breakout_type
+├── average_turnover_value
+├── price_move_score
+├── volume_score
+├── range_score
+├── breakout_score
+├── attention_score
+└── rank
+```
+
+上位10件だけでなく候補全体を保存し、後から重みや順位を検証できるようにする。
+
+## 公開条件
+
+日足の取得、対象日の確認、スコア計算、結果保存がすべて成功した後に、その日のランキングを公開する。
+
+途中で失敗した場合は、前営業日の結果を当日分として表示せず、本日分が未生成であることを返す。
+
+## 既存テーブル
+
+現在の`daily_prices`は、1銘柄・1取引日につき1件の日足を保存する。
+
+テーブル定義は`apps/database/mysql/init/table_schema.sql`、動作確認用の1件は`apps/database/mysql/init/table_seed.sql`で管理している。サンプル値は実際の株価ではない。
+
+今後、売買代金、調整係数、取得日時を追加する必要がある。
+
+## スキーマ変更
+
+初期化SQLは、空のDockerボリュームからMySQLを作るときだけ実行される。既にデータが入ったDBへ`table_schema.sql`の変更は自動適用されない。
+
+開発初期で保存データを破棄できる間は、初期化SQLを修正してDBを作り直す方法も使える。ただし、ボリューム削除は保存データを失うため、実行前に対象を確認する。
+
+実データを保存し始めた後は、次のような連番付きマイグレーションで変更する。
+
+```text
+apps/database/mysql/migrations/
+├── 000001_create_daily_prices.sql
+├── 000002_add_turnover_value.sql
+└── 000003_create_screening_tables.sql
+```
+
+例えば、売買代金を追加する変更は次のような`ALTER TABLE`として管理する。
+
+```sql
+ALTER TABLE daily_prices
+    ADD COLUMN turnover_value DECIMAL(20, 2) NULL COMMENT '売買代金';
+```
+
+安全な移行は次の順序で行う。
+
+```text
+1. NULLを許可した新しいカラムを追加する。
+2. 既存データを埋める。
+3. APIを新しいカラムへ対応させる。
+4. 必要なら最後にNOT NULL制約を追加する。
+```
+
+適用済みのマイグレーションは再実行せず、どこまで適用済みかをDBで管理する。実データを蓄積する前に、Gooseやgolang-migrateなどのマイグレーションツールを選定する。
+
+スキーマまたはクエリを変更した後は、sqlcのコードも再生成する。
+
+```bash
+./scripts/gen_sqlc.sh
+```
+
+生成コード、スキーマ変更、クエリ変更は同じコミットに含める。
+
+## 参考資料
+
+- [JPX日経インデックス400の選定基準](https://www.jpx.co.jp/markets/indices/jpx-nikkei400/index.html)
+- [MSCI Momentum Indexes Methodology](https://www.msci.com/indexes/documents/methodology/2_MSCI_Momentum_Indexes_Methodology_20231120.pdf)
+- [The 52-Week High and Momentum Investing](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1540-6261.2004.00695.x)
+- [Price Momentum and Trading Volume](https://doi.org/10.1111/0022-1082.00280)
