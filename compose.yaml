@@ -4,6 +4,7 @@ services:
     build:
       context: ./apps/api
     environment:
+      JQUANTS_API_KEY: ${JQUANTS_API_KEY}
       DB_HOST: db
       DB_PORT: "3306"
       DB_NAME: ${MYSQL_DATABASE}
