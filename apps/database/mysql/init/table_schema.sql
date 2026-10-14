@@ -8,7 +8,6 @@ CREATE TABLE stocks (
     market_name VARCHAR(100) NOT NULL COMMENT '市場区分名',
     product_category_code VARCHAR(3) NOT NULL COMMENT '商品区分コード',
     is_listed BOOLEAN NOT NULL DEFAULT TRUE COMMENT '現在の上場状態',
-    delisted_on DATE NULL COMMENT '上場廃止日。確認できない場合はNULL',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登録日時',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
     PRIMARY KEY (symbol)
