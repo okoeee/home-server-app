@@ -145,21 +145,25 @@ J-Quantsの公式情報では、株価四本値は日次で16:30 JST、上場銘
 上場廃止: 新しい日足の取得対象から外し、過去データは保存する。
 ```
 
-銘柄マスターには、上場状態、上場日、上場廃止日を持たせる。
+銘柄マスターには、J-Quantsから取得した現在の銘柄情報と上場状態を持たせる。
 
 ```text
 stocks
 ├── symbol
+├── effective_date
 ├── company_name
-├── market
-├── product_category
-├── sector_33
-├── listed_from
-├── delisted_on
+├── sector_33_code
+├── sector_33_name
+├── market_code
+├── market_name
+├── product_category_code
 ├── is_listed
+├── delisted_on
 ├── created_at
 └── updated_at
 ```
+
+J-Quantsの上場銘柄マスターは、上場日と上場廃止日を提供しない。`delisted_on`は別途確認できた場合にだけ保存し、確認できない場合は`NULL`とする。`listed_from`は正確な値を取得できないため、バージョン1では持たない。
 
 銘柄一覧に存在しなかったことだけを理由に、すぐ上場廃止へ更新しない。ページネーションを含む全件取得が正常終了し、取得件数にも異常がないことを確認してから状態を更新する。
 
