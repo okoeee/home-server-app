@@ -7,7 +7,7 @@ INSERT INTO daily_prices (
     close_price,
     volume
 ) VALUES (
-    '7203',
+    '72030',
     '2026-10-09',
     3200.0000,
     3250.0000,
