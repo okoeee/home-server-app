@@ -26,9 +26,13 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   ├── domain/
 │   │   │   ├── model/
 │   │   │   └── repository/
+│   │   ├── external/
+│   │   │   └── jquants/
 │   │   ├── go.mod
 │   │   ├── go.sum
 │   │   ├── handler/
+│   │   ├── infrastructure/
+│   │   │   └── mysql/
 │   │   ├── query/
 │   │   │   ├── daily_prices.sql
 │   │   │   └── stocks.sql
