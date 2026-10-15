@@ -21,14 +21,17 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile
+│   │   ├── db/
+│   │   │   └── sqlcによる生成ファイル
 │   │   ├── go.mod
 │   │   ├── go.sum
 │   │   ├── handler/
-│   │   │   └── ping.go
+│   │   ├── query/
+│   │   │   ├── daily_prices.sql
+│   │   │   └── stocks.sql
 │   │   ├── main.go
-│   │   └── router/
-│   │       ├── router.go
-│   │       └── router_test.go
+│   │   ├── router/
+│   │   └── sqlc.yaml
 │   └── database/
 │       └── mysql/
 │           └── init/
@@ -44,6 +47,16 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ```
 
 株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
+
+## sqlc
+
+`apps/database/mysql/init/table_schema.sql`または`apps/api/query/`内のSQLを変更した場合は、プロジェクトルートで次のコマンドを実行します。
+
+```bash
+./scripts/gen_sqlc.sh
+```
+
+生成された`apps/api/db/`内のGoファイルはGitで管理し、直接編集しません。
 
 ## テスト
 
