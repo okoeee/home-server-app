@@ -21,14 +21,26 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile
+│   │   ├── db/
+│   │   │   └── sqlcによる生成ファイル
+│   │   ├── domain/
+│   │   │   ├── model/
+│   │   │   └── repository/
+│   │   ├── external/
+│   │   │   └── jquants/
 │   │   ├── go.mod
 │   │   ├── go.sum
 │   │   ├── handler/
-│   │   │   └── ping.go
+│   │   ├── infrastructure/
+│   │   │   └── mysql/
+│   │   ├── query/
+│   │   │   ├── daily_prices.sql
+│   │   │   └── stocks.sql
 │   │   ├── main.go
-│   │   └── router/
-│   │       ├── router.go
-│   │       └── router_test.go
+│   │   ├── router/
+│   │   ├── sqlc.yaml
+│   │   └── usecase/
+│   │       └── stock/
 │   └── database/
 │       └── mysql/
 │           └── init/
@@ -38,12 +50,33 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   └── stock-price-design.md
 ├── scripts/
 │   ├── deploy.sh
-│   └── gen_sqlc.sh
+│   ├── gen_sqlc.sh
+│   └── import_stocks.sh
 ├── compose.yaml
 └── README.md
 ```
 
 株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
+
+## sqlc
+
+`apps/database/mysql/init/table_schema.sql`または`apps/api/query/`内のSQLを変更した場合は、プロジェクトルートで次のコマンドを実行します。
+
+```bash
+./scripts/gen_sqlc.sh
+```
+
+生成された`apps/api/db/`内のGoファイルはGitで管理し、直接編集しません。
+
+## 銘柄マスターの取得
+
+MySQLコンテナを起動した状態で、プロジェクトルートから次のコマンドを実行します。
+
+```bash
+./scripts/import_stocks.sh
+```
+
+スクリプトは`.env`からJ-QuantsのAPIキーとDB設定を読み込み、ホスト側からMySQLの`4306`番ポートへ接続して銘柄マスターを保存します。
 
 ## テスト
 

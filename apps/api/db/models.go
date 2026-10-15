@@ -10,7 +10,7 @@ import (
 
 // 株価の日足
 type DailyPrice struct {
-	// 証券コード
+	// 銘柄を識別する5桁の証券コード
 	Symbol string
 	// 取引日
 	TradeDate time.Time
@@ -24,4 +24,30 @@ type DailyPrice struct {
 	ClosePrice string
 	// 調整済み出来高
 	Volume uint64
+}
+
+// 銘柄マスター
+type Stock struct {
+	// 銘柄を識別する5桁の証券コード
+	Symbol string
+	// 銘柄情報の適用日
+	EffectiveDate time.Time
+	// 会社名
+	CompanyName string
+	// 33業種コード
+	Sector33Code string
+	// 33業種名
+	Sector33Name string
+	// 市場区分コード
+	MarketCode string
+	// 市場区分名
+	MarketName string
+	// 商品区分コード
+	ProductCategoryCode string
+	// 現在の上場状態
+	IsListed bool
+	// 登録日時
+	CreatedAt time.Time
+	// 更新日時
+	UpdatedAt time.Time
 }
