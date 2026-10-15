@@ -44,6 +44,7 @@ func (c *JQuantsClient) fetchEquityMaster(
 	if err != nil {
 		return model.ListedEquityMaster{}, fmt.Errorf("Error doing request: %w", err)
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return model.ListedEquityMaster{}, fmt.Errorf("Error response from api: %s", response.Status)
