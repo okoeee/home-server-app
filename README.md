@@ -23,6 +23,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   ├── Dockerfile
 │   │   ├── db/
 │   │   │   └── sqlcによる生成ファイル
+│   │   ├── domain/
+│   │   │   ├── model/
+│   │   │   └── repository/
 │   │   ├── go.mod
 │   │   ├── go.sum
 │   │   ├── handler/
@@ -31,7 +34,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   │   └── stocks.sql
 │   │   ├── main.go
 │   │   ├── router/
-│   │   └── sqlc.yaml
+│   │   ├── sqlc.yaml
+│   │   └── usecase/
+│   │       └── stock/
 │   └── database/
 │       └── mysql/
 │           └── init/
