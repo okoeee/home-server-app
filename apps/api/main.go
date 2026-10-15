@@ -1,16 +1,16 @@
 package main
 
 import (
-	"api/database"
 	"api/db"
 	"api/handler"
+	"api/infrastructure/mysql"
 	"api/router"
 	"log"
 )
 
 func main() {
 
-	databaseConnection, databaseErr := database.Open()
+	databaseConnection, databaseErr := mysql.Open()
 	if databaseErr != nil {
 		log.Fatal(databaseErr)
 	}

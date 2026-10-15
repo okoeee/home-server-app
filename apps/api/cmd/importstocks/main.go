@@ -1,7 +1,6 @@
 package main
 
 import (
-	"api/database"
 	"api/db"
 	"api/domain/model"
 	"api/external/jquants/fetch"
@@ -64,7 +63,7 @@ func save(
 	stocks []model.Stock,
 ) error {
 
-	databaseConnection, err := database.Open()
+	databaseConnection, err := mysql.Open()
 	if err != nil {
 		return fmt.Errorf("error opening database connection: %w", err)
 	}
