@@ -10,6 +10,8 @@ const (
 	defaultBaseURL = "https://api.jquants.com/v2"
 
 	equitiesMasterPath = "/equities/master"
+
+	equitiesBarsDaily = "/equities/bars/daily"
 )
 
 type JQuantsClient struct {
