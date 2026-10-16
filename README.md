@@ -21,6 +21,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile
+│   │   ├── cmd/
+│   │   │   ├── fetchdailyprices/
+│   │   │   └── importstocks/
 │   │   ├── db/
 │   │   │   └── sqlcによる生成ファイル
 │   │   ├── domain/
@@ -50,6 +53,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   └── stock-price-design.md
 ├── scripts/
 │   ├── deploy.sh
+│   ├── fetch_daily_prices.sh
 │   ├── gen_sqlc.sh
 │   └── import_stocks.sh
 ├── compose.yaml
@@ -77,6 +81,16 @@ MySQLコンテナを起動した状態で、プロジェクトルートから次
 ```
 
 スクリプトは`.env`からJ-QuantsのAPIキーとDB設定を読み込み、ホスト側からMySQLの`4306`番ポートへ接続して銘柄マスターを保存します。
+
+## 株価日足の取得
+
+`.env`にJ-QuantsのAPIキーとDB設定を用意し、プロジェクトルートから取得日を指定して実行します。
+
+```bash
+./scripts/fetch_daily_prices.sh 2026-10-15
+```
+
+指定日は`YYYY-MM-DD`形式で入力します。取得件数と先頭の1件をログへ出力します。現時点では、取得した株価日足をDBへ保存しません。
 
 ## テスト
 
