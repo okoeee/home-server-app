@@ -2,7 +2,10 @@ module api
 
 go 1.27.1
 
-require github.com/gin-gonic/gin v1.12.0
+require (
+	github.com/gin-gonic/gin v1.12.0
+	github.com/shopspring/decimal v1.5.0
+)
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
