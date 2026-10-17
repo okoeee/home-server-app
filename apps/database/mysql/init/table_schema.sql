@@ -16,10 +16,10 @@ CREATE TABLE stocks (
 CREATE TABLE daily_prices (
     symbol VARCHAR(5) NOT NULL COMMENT '銘柄を識別する5桁の証券コード',
     trade_date DATE NOT NULL COMMENT '取引日',
-    open_price DECIMAL(14, 4) NOT NULL COMMENT '調整済み始値',
-    high_price DECIMAL(14, 4) NOT NULL COMMENT '調整済み高値',
-    low_price DECIMAL(14, 4) NOT NULL COMMENT '調整済み安値',
-    close_price DECIMAL(14, 4) NOT NULL COMMENT '調整済み終値',
-    volume BIGINT UNSIGNED NOT NULL COMMENT '調整済み出来高',
+    open_price DECIMAL(14, 1) NOT NULL COMMENT '調整済み始値（小数第1位）',
+    high_price DECIMAL(14, 1) NOT NULL COMMENT '調整済み高値（小数第1位）',
+    low_price DECIMAL(14, 1) NOT NULL COMMENT '調整済み安値（小数第1位）',
+    close_price DECIMAL(14, 1) NOT NULL COMMENT '調整済み終値（小数第1位）',
+    volume DECIMAL(20, 1) UNSIGNED NOT NULL COMMENT '調整済み出来高（小数第1位）',
     PRIMARY KEY (symbol, trade_date)
 ) COMMENT = '株価の日足';
