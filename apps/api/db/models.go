@@ -14,16 +14,16 @@ type DailyPrice struct {
 	Symbol string
 	// 取引日
 	TradeDate time.Time
-	// 調整済み始値
+	// 調整済み始値（小数第1位）
 	OpenPrice string
-	// 調整済み高値
+	// 調整済み高値（小数第1位）
 	HighPrice string
-	// 調整済み安値
+	// 調整済み安値（小数第1位）
 	LowPrice string
-	// 調整済み終値
+	// 調整済み終値（小数第1位）
 	ClosePrice string
-	// 調整済み出来高
-	Volume uint64
+	// 調整済み出来高（小数第1位）
+	Volume string
 }
 
 // 銘柄マスター

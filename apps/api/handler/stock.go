@@ -14,7 +14,7 @@ type dailyPriceResponse struct {
 	HighPrice  string `json:"high_price"`
 	LowPrice   string `json:"low_price"`
 	ClosePrice string `json:"close_price"`
-	Volume     uint64 `json:"volume"`
+	Volume     string `json:"volume"`
 }
 
 type StockHandler struct {
