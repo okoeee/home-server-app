@@ -10,6 +10,7 @@ import (
 
 type Querier interface {
 	ListDailyPricesBySymbol(ctx context.Context, symbol string) ([]DailyPrice, error)
+	UpsertDailyPrice(ctx context.Context, arg UpsertDailyPriceParams) error
 	UpsertStock(ctx context.Context, arg UpsertStockParams) error
 }
 

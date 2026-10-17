@@ -15,6 +15,10 @@ func (fakeQuerier) ListDailyPricesBySymbol(context.Context, string) ([]db.DailyP
 	return nil, nil
 }
 
+func (fakeQuerier) UpsertDailyPrice(context.Context, db.UpsertDailyPriceParams) error {
+	return nil
+}
+
 func (fakeQuerier) UpsertStock(context.Context, db.UpsertStockParams) error {
 	return nil
 }

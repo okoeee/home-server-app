@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const listDailyPricesBySymbol = `-- name: ListDailyPricesBySymbol :many
@@ -52,4 +53,53 @@ func (q *Queries) ListDailyPricesBySymbol(ctx context.Context, symbol string) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertDailyPrice = `-- name: UpsertDailyPrice :exec
+INSERT INTO daily_prices (
+    symbol,
+    trade_date,
+    open_price,
+    high_price,
+    low_price,
+    close_price,
+    volume
+) VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+)
+ON DUPLICATE KEY UPDATE
+    open_price = VALUES(open_price),
+    high_price = VALUES(high_price),
+    low_price = VALUES(low_price),
+    close_price = VALUES(close_price),
+    volume = VALUES(volume)
+`
+
+type UpsertDailyPriceParams struct {
+	Symbol     string
+	TradeDate  time.Time
+	OpenPrice  string
+	HighPrice  string
+	LowPrice   string
+	ClosePrice string
+	Volume     string
+}
+
+func (q *Queries) UpsertDailyPrice(ctx context.Context, arg UpsertDailyPriceParams) error {
+	_, err := q.db.ExecContext(ctx, upsertDailyPrice,
+		arg.Symbol,
+		arg.TradeDate,
+		arg.OpenPrice,
+		arg.HighPrice,
+		arg.LowPrice,
+		arg.ClosePrice,
+		arg.Volume,
+	)
+	return err
 }

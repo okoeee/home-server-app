@@ -1,5 +1,7 @@
 package model
 
+import "github.com/shopspring/decimal"
+
 // DailyPrice J-Quantsから取得した株価日足
 // [https://jpx-jquants.com/ja/spec/eq-bars-daily]
 type DailyPrice struct {
@@ -10,40 +12,40 @@ type DailyPrice struct {
 	Code string `json:"Code"`
 
 	// 始値
-	Open *float64 `json:"O"`
+	Open *decimal.Decimal `json:"O"`
 
 	// 高値
-	High *float64 `json:"H"`
+	High *decimal.Decimal `json:"H"`
 
 	// 安値
-	Low *float64 `json:"L"`
+	Low *decimal.Decimal `json:"L"`
 
 	// 終値
-	Close *float64 `json:"C"`
+	Close *decimal.Decimal `json:"C"`
 
 	// 出来高
-	Volume *float64 `json:"Vo"`
+	Volume *decimal.Decimal `json:"Vo"`
 
 	// 売買代金
-	TurnoverValue *float64 `json:"Va"`
+	TurnoverValue *decimal.Decimal `json:"Va"`
 
 	// 株式分割や併合などを反映する調整係数
-	AdjustmentFactor float64 `json:"AdjFactor"`
+	AdjustmentFactor decimal.Decimal `json:"AdjFactor"`
 
 	// 調整済み始値
-	AdjustedOpen *float64 `json:"AdjO"`
+	AdjustedOpen *decimal.Decimal `json:"AdjO"`
 
 	// 調整済み高値
-	AdjustedHigh *float64 `json:"AdjH"`
+	AdjustedHigh *decimal.Decimal `json:"AdjH"`
 
 	// 調整済み安値
-	AdjustedLow *float64 `json:"AdjL"`
+	AdjustedLow *decimal.Decimal `json:"AdjL"`
 
 	// 調整済み終値
-	AdjustedClose *float64 `json:"AdjC"`
+	AdjustedClose *decimal.Decimal `json:"AdjC"`
 
 	// 調整済み出来高
-	AdjustedVolume *float64 `json:"AdjVo"`
+	AdjustedVolume *decimal.Decimal `json:"AdjVo"`
 }
 
 // ListedDailyPrices J-Quantsの日足APIレスポンス全体
