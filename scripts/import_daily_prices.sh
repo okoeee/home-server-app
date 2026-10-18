@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 if [[ $# -ne 1 ]]; then
-  echo "使用方法: ./scripts/fetch_daily_prices.sh YYYY-MM-DD" >&2
+  echo "使用方法: ./scripts/import_daily_prices.sh YYYY-MM-DD" >&2
   exit 1
 fi
 
@@ -37,4 +37,4 @@ DB_HOST=127.0.0.1 \
   DB_NAME="${MYSQL_DATABASE}" \
   DB_USER="${MYSQL_USER}" \
   DB_PASSWORD="${MYSQL_PASSWORD}" \
-  go run ./cmd/fetchdailyprices "$1"
+  go run ./cmd/importdailyprices "$1"

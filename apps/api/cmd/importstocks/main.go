@@ -67,15 +67,17 @@ func save(
 	if err != nil {
 		return fmt.Errorf("error opening database connection: %w", err)
 	}
-
-	defer databaseConnection.Close()
+	defer func() {
+		_ = databaseConnection.Close()
+	}()
 
 	transaction, err := databaseConnection.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error creating database transaction: %w", err)
 	}
-
-	defer transaction.Rollback()
+	defer func() {
+		_ = transaction.Rollback()
+	}()
 
 	queries := db.New(transaction)
 	stockRepository := mysql.NewStockRepository(queries)

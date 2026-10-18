@@ -18,7 +18,7 @@ import (
 func main() {
 
 	if len(os.Args) != 2 {
-		log.Fatal("usage: go run ./cmd/fetchdailyprices YYYY-MM-DD")
+		log.Fatal("usage: go run ./cmd/importdailyprices YYYY-MM-DD")
 	}
 
 	date, err := time.Parse(time.DateOnly, os.Args[1])
@@ -78,13 +78,20 @@ func save(
 	if err != nil {
 		return fmt.Errorf("open database connection error: %w", err)
 	}
-	defer databaseConnection.Close()
+	defer func() {
+		err := databaseConnection.Close()
+		if err != nil {
+			log.Print(err)
+		}
+	}()
 
 	transaction, err := databaseConnection.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin database transaction error: %w", err)
 	}
-	defer transaction.Rollback()
+	defer func() {
+		_ = transaction.Rollback()
+	}()
 
 	queries := db.New(transaction)
 	dailyPriceRepository := mysql.NewDailyPriceRepository(queries)

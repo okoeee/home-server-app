@@ -15,7 +15,12 @@ func main() {
 		log.Fatal(databaseErr)
 	}
 
-	defer databaseConnection.Close()
+	defer func() {
+		err := databaseConnection.Close()
+		if err != nil {
+			log.Print(err)
+		}
+	}()
 
 	queries := db.New(databaseConnection)
 
