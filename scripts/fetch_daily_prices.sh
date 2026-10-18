@@ -37,4 +37,4 @@ DB_HOST=127.0.0.1 \
   DB_NAME="${MYSQL_DATABASE}" \
   DB_USER="${MYSQL_USER}" \
   DB_PASSWORD="${MYSQL_PASSWORD}" \
-  go run ./cmd/fetchdailyprices "$1"
+  go run ./cmd/importdailyprices "$1"
