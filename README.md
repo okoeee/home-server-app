@@ -22,7 +22,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── api/
 │   │   ├── Dockerfile
 │   │   ├── cmd/
-│   │   │   ├── fetchdailyprices/
+│   │   │   ├── importdailyprices/
 │   │   │   └── importstocks/
 │   │   ├── db/
 │   │   │   └── sqlcによる生成ファイル
@@ -53,7 +53,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   └── stock-price-design.md
 ├── scripts/
 │   ├── deploy.sh
-│   ├── fetch_daily_prices.sh
+│   ├── import_daily_prices.sh
 │   ├── gen_sqlc.sh
 │   └── import_stocks.sh
 ├── compose.yaml

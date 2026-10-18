@@ -18,7 +18,7 @@ import (
 func main() {
 
 	if len(os.Args) != 2 {
-		log.Fatal("usage: go run ./cmd/fetchdailyprices YYYY-MM-DD")
+		log.Fatal("usage: go run ./cmd/importdailyprices YYYY-MM-DD")
 	}
 
 	date, err := time.Parse(time.DateOnly, os.Args[1])
