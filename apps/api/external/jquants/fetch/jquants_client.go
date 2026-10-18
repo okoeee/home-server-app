@@ -12,6 +12,8 @@ const (
 	equitiesMasterPath = "/equities/master"
 
 	equitiesBarsDaily = "/equities/bars/daily"
+
+	marketsCalendar = "/markets/calendar"
 )
 
 type JQuantsClient struct {
