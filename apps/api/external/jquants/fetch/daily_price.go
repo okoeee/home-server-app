@@ -46,7 +46,9 @@ func (client *JQuantsClient) fetchDailyPrice(
 	if err != nil {
 		return model.ListedDailyPrices{}, fmt.Errorf("failed to send request: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode != http.StatusOK {
 		return model.ListedDailyPrices{}, fmt.Errorf("unexpected status code: %d", response.StatusCode)
