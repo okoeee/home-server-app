@@ -78,13 +78,20 @@ func save(
 	if err != nil {
 		return fmt.Errorf("open database connection error: %w", err)
 	}
-	defer databaseConnection.Close()
+	defer func() {
+		err := databaseConnection.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	transaction, err := databaseConnection.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin database transaction error: %w", err)
 	}
-	defer transaction.Rollback()
+	defer func() {
+		_ = transaction.Rollback()
+	}()
 
 	queries := db.New(transaction)
 	dailyPriceRepository := mysql.NewDailyPriceRepository(queries)
