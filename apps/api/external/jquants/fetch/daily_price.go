@@ -42,7 +42,7 @@ func (client *JQuantsClient) fetchDailyPrice(
 
 	request.Header.Set("x-api-key", client.apiKey)
 
-	response, err := client.httpClient.Do(request)
+	response, err := client.sendRequestWithInterval(ctx, request)
 	if err != nil {
 		return model.ListedDailyPrices{}, fmt.Errorf("failed to send request: %w", err)
 	}

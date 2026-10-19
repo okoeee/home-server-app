@@ -40,7 +40,7 @@ func (c *JQuantsClient) fetchEquityMaster(
 
 	request.Header.Set("x-api-key", c.apiKey)
 
-	response, err := c.httpClient.Do(request)
+	response, err := c.sendRequestWithInterval(ctx, request)
 	if err != nil {
 		return model.ListedEquityMaster{}, fmt.Errorf("error doing request: %w", err)
 	}

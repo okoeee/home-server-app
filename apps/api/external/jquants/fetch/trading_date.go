@@ -43,7 +43,7 @@ func (client *JQuantsClient) FetchTradingDays(
 
 	request.Header.Set("x-api-key", client.apiKey)
 
-	response, err := client.httpClient.Do(request)
+	response, err := client.sendRequestWithInterval(ctx, request)
 	if err != nil {
 		return model.ListedTradingCalendar{}, fmt.Errorf("error doing request: %w", err)
 	}
