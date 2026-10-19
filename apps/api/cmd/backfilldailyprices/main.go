@@ -56,7 +56,7 @@ func main() {
 
 	databaseConnection, err := mysql.Open()
 	if err != nil {
-		log.Fatalf("open database connection error: %w", err)
+		log.Fatalf("open database connection error: %v", err)
 	}
 	defer func() {
 		err := databaseConnection.Close()
