@@ -55,6 +55,62 @@ func (q *Queries) ListDailyPricesBySymbol(ctx context.Context, symbol string) ([
 	return items, nil
 }
 
+const listDailyPricesWithPreviousClose = `-- name: ListDailyPricesWithPreviousClose :many
+SELECT
+    current_price.symbol,
+    current_price.trade_date,
+    current_price.close_price,
+    previous_price.trade_date AS previous_trade_date,
+    previous_price.close_price AS previous_close_price
+FROM daily_prices as current_price
+         INNER JOIN daily_prices as previous_price
+                    ON previous_price.symbol = current_price.symbol
+                        AND previous_price.trade_date = (
+                            SELECT MAX(candidate.trade_date)
+                            FROM daily_prices AS candidate
+                            WHERE candidate.symbol = current_price.symbol
+                              AND candidate.trade_date < current_price.trade_date
+                        )
+WHERE current_price.trade_date = ?
+`
+
+type ListDailyPricesWithPreviousCloseRow struct {
+	Symbol             string
+	TradeDate          time.Time
+	ClosePrice         string
+	PreviousTradeDate  time.Time
+	PreviousClosePrice string
+}
+
+func (q *Queries) ListDailyPricesWithPreviousClose(ctx context.Context, tradeDate time.Time) ([]ListDailyPricesWithPreviousCloseRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDailyPricesWithPreviousClose, tradeDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDailyPricesWithPreviousCloseRow
+	for rows.Next() {
+		var i ListDailyPricesWithPreviousCloseRow
+		if err := rows.Scan(
+			&i.Symbol,
+			&i.TradeDate,
+			&i.ClosePrice,
+			&i.PreviousTradeDate,
+			&i.PreviousClosePrice,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertDailyPrice = `-- name: UpsertDailyPrice :exec
 INSERT INTO daily_prices (
     symbol,

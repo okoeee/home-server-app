@@ -6,10 +6,12 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 type Querier interface {
 	ListDailyPricesBySymbol(ctx context.Context, symbol string) ([]DailyPrice, error)
+	ListDailyPricesWithPreviousClose(ctx context.Context, tradeDate time.Time) ([]ListDailyPricesWithPreviousCloseRow, error)
 	UpsertDailyPrice(ctx context.Context, arg UpsertDailyPriceParams) error
 	UpsertStock(ctx context.Context, arg UpsertStockParams) error
 }
