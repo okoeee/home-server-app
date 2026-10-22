@@ -9,3 +9,13 @@ sql:
         package: "db"
         out: "db"
         emit_interface: true
+        overrides:
+          - db_type: "decimal"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              type: "Decimal"
+          - db_type: "decimal"
+            unsigned: true
+            go_type:
+              import: "github.com/shopspring/decimal"
+              type: "Decimal"
