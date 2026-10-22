@@ -2,6 +2,7 @@ package handler
 
 import (
 	"api/db"
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,11 +18,18 @@ type dailyPriceResponse struct {
 	Volume     string `json:"volume"`
 }
 
-type StockHandler struct {
-	queries db.Querier
+type StockQuerier interface {
+	ListDailyPricesBySymbol(
+		context.Context,
+		string,
+	) ([]db.DailyPrice, error)
 }
 
-func NewStockHandler(queries db.Querier) *StockHandler {
+type StockHandler struct {
+	queries StockQuerier
+}
+
+func NewStockHandler(queries StockQuerier) *StockHandler {
 	return &StockHandler{
 		queries: queries,
 	}
