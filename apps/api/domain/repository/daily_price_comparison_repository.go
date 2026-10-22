@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type DailyPriceComparison interface {
+type DailyPriceComparisonRepository interface {
 	ListByTradeDate(
 		context.Context,
 		time.Time,
