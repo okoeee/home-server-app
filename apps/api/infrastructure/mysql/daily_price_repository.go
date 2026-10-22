@@ -24,11 +24,11 @@ func (repository *DailyPriceRepository) Upsert(
 		db.UpsertDailyPriceParams{
 			Symbol:     dailyPrice.Symbol,
 			TradeDate:  dailyPrice.TradeDate,
-			OpenPrice:  dailyPrice.OpenPrice.StringFixed(1),
-			HighPrice:  dailyPrice.HighPrice.StringFixed(1),
-			LowPrice:   dailyPrice.LowPrice.StringFixed(1),
-			ClosePrice: dailyPrice.ClosePrice.StringFixed(1),
-			Volume:     dailyPrice.Volume.StringFixed(1),
+			OpenPrice:  dailyPrice.OpenPrice,
+			HighPrice:  dailyPrice.HighPrice,
+			LowPrice:   dailyPrice.LowPrice,
+			ClosePrice: dailyPrice.ClosePrice,
+			Volume:     dailyPrice.Volume,
 		},
 	)
 

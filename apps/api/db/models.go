@@ -6,6 +6,8 @@ package db
 
 import (
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 // 株価の日足
@@ -15,15 +17,15 @@ type DailyPrice struct {
 	// 取引日
 	TradeDate time.Time
 	// 調整済み始値（小数第1位）
-	OpenPrice string
+	OpenPrice decimal.Decimal
 	// 調整済み高値（小数第1位）
-	HighPrice string
+	HighPrice decimal.Decimal
 	// 調整済み安値（小数第1位）
-	LowPrice string
+	LowPrice decimal.Decimal
 	// 調整済み終値（小数第1位）
-	ClosePrice string
+	ClosePrice decimal.Decimal
 	// 調整済み出来高（小数第1位）
-	Volume string
+	Volume decimal.Decimal
 }
 
 // 銘柄マスター

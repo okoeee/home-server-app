@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const listDailyPricesBySymbol = `-- name: ListDailyPricesBySymbol :many
@@ -77,9 +79,9 @@ WHERE current_price.trade_date = ?
 type ListDailyPricesWithPreviousCloseRow struct {
 	Symbol             string
 	TradeDate          time.Time
-	ClosePrice         string
+	ClosePrice         decimal.Decimal
 	PreviousTradeDate  time.Time
-	PreviousClosePrice string
+	PreviousClosePrice decimal.Decimal
 }
 
 func (q *Queries) ListDailyPricesWithPreviousClose(ctx context.Context, tradeDate time.Time) ([]ListDailyPricesWithPreviousCloseRow, error) {
@@ -140,11 +142,11 @@ ON DUPLICATE KEY UPDATE
 type UpsertDailyPriceParams struct {
 	Symbol     string
 	TradeDate  time.Time
-	OpenPrice  string
-	HighPrice  string
-	LowPrice   string
-	ClosePrice string
-	Volume     string
+	OpenPrice  decimal.Decimal
+	HighPrice  decimal.Decimal
+	LowPrice   decimal.Decimal
+	ClosePrice decimal.Decimal
+	Volume     decimal.Decimal
 }
 
 func (q *Queries) UpsertDailyPrice(ctx context.Context, arg UpsertDailyPriceParams) error {
