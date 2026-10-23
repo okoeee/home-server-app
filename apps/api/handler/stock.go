@@ -2,6 +2,7 @@ package handler
 
 import (
 	"api/db"
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,11 +18,18 @@ type dailyPriceResponse struct {
 	Volume     string `json:"volume"`
 }
 
-type StockHandler struct {
-	queries db.Querier
+type StockQuerier interface {
+	ListDailyPricesBySymbol(
+		context.Context,
+		string,
+	) ([]db.DailyPrice, error)
 }
 
-func NewStockHandler(queries db.Querier) *StockHandler {
+type StockHandler struct {
+	queries StockQuerier
+}
+
+func NewStockHandler(queries StockQuerier) *StockHandler {
 	return &StockHandler{
 		queries: queries,
 	}
@@ -50,11 +58,11 @@ func (handler *StockHandler) GetDailyPrices(c *gin.Context) {
 		response := dailyPriceResponse{
 			Symbol:     price.Symbol,
 			TradeDate:  price.TradeDate.Format("2006-01-02"),
-			OpenPrice:  price.OpenPrice,
-			HighPrice:  price.HighPrice,
-			LowPrice:   price.LowPrice,
-			ClosePrice: price.ClosePrice,
-			Volume:     price.Volume,
+			OpenPrice:  price.OpenPrice.StringFixed(1),
+			HighPrice:  price.HighPrice.StringFixed(1),
+			LowPrice:   price.LowPrice.StringFixed(1),
+			ClosePrice: price.ClosePrice.StringFixed(1),
+			Volume:     price.Volume.StringFixed(1),
 		}
 
 		responses = append(responses, response)
