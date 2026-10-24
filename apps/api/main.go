@@ -5,6 +5,7 @@ import (
 	"api/handler"
 	"api/infrastructure/mysql"
 	"api/router"
+	"api/usecase/dailyprice"
 	"log"
 )
 
@@ -25,8 +26,11 @@ func main() {
 	queries := db.New(databaseConnection)
 
 	stockHandler := handler.NewStockHandler(queries)
+	dailyPriceRepository := mysql.NewDailyPriceRepository(queries)
+	calculator := dailyprice.NewDailyPriceChangeCalculator(dailyPriceRepository)
+	dailyPriceChangeHandler := handler.NewDailyPriceChangeHandler(calculator)
 
-	routerErr := router.NewRouter(stockHandler).Run()
+	routerErr := router.NewRouter(stockHandler, dailyPriceChangeHandler).Run()
 
 	if routerErr != nil {
 		log.Fatal(routerErr)
