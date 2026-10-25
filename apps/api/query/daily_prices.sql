@@ -30,6 +30,36 @@ FROM daily_prices as current_price
                         )
 WHERE current_price.trade_date = ?;
 
+-- name: ListDailyVolumesByTradeDate :many
+SELECT
+    symbol,
+    trade_date,
+    volume
+FROM daily_prices
+WHERE trade_date = ?
+ORDER BY symbol;
+
+-- name: ListDailyVolumeHistory :many
+WITH ranked_volumes AS (
+    SELECT
+        symbol,
+        trade_date,
+        volume,
+        ROW_NUMBER() OVER (
+            PARTITION BY symbol
+            ORDER BY trade_date DESC
+        ) AS history_number
+    FROM daily_prices
+    WHERE trade_date < ?
+)
+SELECT
+    symbol,
+    trade_date,
+    volume
+FROM ranked_volumes
+WHERE history_number <= 20
+ORDER BY symbol, trade_date DESC;
+
 -- name: UpsertDailyPrice :exec
 INSERT INTO daily_prices (
     symbol,
