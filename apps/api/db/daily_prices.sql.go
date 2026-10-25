@@ -113,6 +113,96 @@ func (q *Queries) ListDailyPricesWithPreviousClose(ctx context.Context, tradeDat
 	return items, nil
 }
 
+const listDailyVolumeHistory = `-- name: ListDailyVolumeHistory :many
+WITH ranked_volumes AS (
+    SELECT
+        symbol,
+        trade_date,
+        volume,
+        ROW_NUMBER() OVER (
+            PARTITION BY symbol
+            ORDER BY trade_date DESC
+        ) AS history_number
+    FROM daily_prices
+    WHERE trade_date < ?
+)
+SELECT
+    symbol,
+    trade_date,
+    volume
+FROM ranked_volumes
+WHERE history_number <= 20
+ORDER BY symbol, trade_date DESC
+`
+
+type ListDailyVolumeHistoryRow struct {
+	Symbol    string
+	TradeDate time.Time
+	Volume    decimal.Decimal
+}
+
+func (q *Queries) ListDailyVolumeHistory(ctx context.Context, tradeDate time.Time) ([]ListDailyVolumeHistoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDailyVolumeHistory, tradeDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDailyVolumeHistoryRow
+	for rows.Next() {
+		var i ListDailyVolumeHistoryRow
+		if err := rows.Scan(&i.Symbol, &i.TradeDate, &i.Volume); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDailyVolumesByTradeDate = `-- name: ListDailyVolumesByTradeDate :many
+SELECT
+    symbol,
+    trade_date,
+    volume
+FROM daily_prices
+WHERE trade_date = ?
+ORDER BY symbol
+`
+
+type ListDailyVolumesByTradeDateRow struct {
+	Symbol    string
+	TradeDate time.Time
+	Volume    decimal.Decimal
+}
+
+func (q *Queries) ListDailyVolumesByTradeDate(ctx context.Context, tradeDate time.Time) ([]ListDailyVolumesByTradeDateRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDailyVolumesByTradeDate, tradeDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDailyVolumesByTradeDateRow
+	for rows.Next() {
+		var i ListDailyVolumesByTradeDateRow
+		if err := rows.Scan(&i.Symbol, &i.TradeDate, &i.Volume); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertDailyPrice = `-- name: UpsertDailyPrice :exec
 INSERT INTO daily_prices (
     symbol,
