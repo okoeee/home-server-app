@@ -125,7 +125,8 @@ func TestGetDailyPriceChanges(t *testing.T) {
 				},
 			}
 			calculator := dailyprice.NewDailyPriceChangeCalculator(repository)
-			engine := NewRouter(handler.NewStockHandler(fakeQuerier{}), handler.NewDailyPriceChangeHandler(calculator))
+			volumeCalculator := dailyprice.NewDailyVolumeRatioCalculator(fakeVolumeReader{})
+			engine := NewRouter(handler.NewStockHandler(fakeQuerier{}), handler.NewDailyPriceChangeHandler(calculator), handler.NewDailyVolumeRatioHandler(volumeCalculator))
 			recorder := httptest.NewRecorder()
 			engine.ServeHTTP(recorder, request)
 
@@ -162,7 +163,8 @@ func TestPing(t *testing.T) {
 	stockHandler := handler.NewStockHandler(fakeQuerier{})
 	calculator := dailyprice.NewDailyPriceChangeCalculator(fakeComparisonRepository{})
 	changeHandler := handler.NewDailyPriceChangeHandler(calculator)
-	engine := NewRouter(stockHandler, changeHandler)
+	volumeCalculator := dailyprice.NewDailyVolumeRatioCalculator(fakeVolumeReader{})
+	engine := NewRouter(stockHandler, changeHandler, handler.NewDailyVolumeRatioHandler(volumeCalculator))
 
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/ping", nil)
