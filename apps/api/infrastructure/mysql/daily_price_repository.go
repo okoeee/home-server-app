@@ -16,6 +16,46 @@ func NewDailyPriceRepository(queries *db.Queries) *DailyPriceRepository {
 	return &DailyPriceRepository{queries}
 }
 
+func (repository *DailyPriceRepository) ListVolumesByTradeDate(
+	ctx context.Context,
+	tradeDate time.Time,
+) ([]model.DailyVolume, error) {
+	rows, err := repository.queries.ListDailyVolumesByTradeDate(ctx, tradeDate)
+	if err != nil {
+		return nil, fmt.Errorf("list daily volumes for %s: %w", tradeDate.Format(time.DateOnly), err)
+	}
+
+	volumes := make([]model.DailyVolume, 0, len(rows))
+	for _, row := range rows {
+		volumes = append(volumes, model.DailyVolume{
+			Symbol:    row.Symbol,
+			TradeDate: row.TradeDate,
+			Volume:    row.Volume,
+		})
+	}
+	return volumes, nil
+}
+
+func (repository *DailyPriceRepository) ListVolumeHistory(
+	ctx context.Context,
+	beforeDate time.Time,
+) ([]model.DailyVolume, error) {
+	rows, err := repository.queries.ListDailyVolumeHistory(ctx, beforeDate)
+	if err != nil {
+		return nil, fmt.Errorf("list daily volume history before %s: %w", beforeDate.Format(time.DateOnly), err)
+	}
+
+	volumes := make([]model.DailyVolume, 0, len(rows))
+	for _, row := range rows {
+		volumes = append(volumes, model.DailyVolume{
+			Symbol:    row.Symbol,
+			TradeDate: row.TradeDate,
+			Volume:    row.Volume,
+		})
+	}
+	return volumes, nil
+}
+
 func (repository *DailyPriceRepository) ListByTradeDate(
 	ctx context.Context,
 	date time.Time,

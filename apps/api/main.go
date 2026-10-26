@@ -29,8 +29,14 @@ func main() {
 	dailyPriceRepository := mysql.NewDailyPriceRepository(queries)
 	calculator := dailyprice.NewDailyPriceChangeCalculator(dailyPriceRepository)
 	dailyPriceChangeHandler := handler.NewDailyPriceChangeHandler(calculator)
+	volumeRatioCalculator := dailyprice.NewDailyVolumeRatioCalculator(dailyPriceRepository)
+	dailyVolumeRatioHandler := handler.NewDailyVolumeRatioHandler(volumeRatioCalculator)
 
-	routerErr := router.NewRouter(stockHandler, dailyPriceChangeHandler).Run()
+	routerErr := router.NewRouter(
+		stockHandler,
+		dailyPriceChangeHandler,
+		dailyVolumeRatioHandler,
+	).Run()
 
 	if routerErr != nil {
 		log.Fatal(routerErr)

@@ -12,6 +12,8 @@ import (
 type Querier interface {
 	ListDailyPricesBySymbol(ctx context.Context, symbol string) ([]DailyPrice, error)
 	ListDailyPricesWithPreviousClose(ctx context.Context, tradeDate time.Time) ([]ListDailyPricesWithPreviousCloseRow, error)
+	ListDailyVolumeHistory(ctx context.Context, tradeDate time.Time) ([]ListDailyVolumeHistoryRow, error)
+	ListDailyVolumesByTradeDate(ctx context.Context, tradeDate time.Time) ([]ListDailyVolumesByTradeDateRow, error)
 	UpsertDailyPrice(ctx context.Context, arg UpsertDailyPriceParams) error
 	UpsertStock(ctx context.Context, arg UpsertStockParams) error
 }

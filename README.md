@@ -52,6 +52,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │               ├── table_schema.sql
 │               └── table_seed.sql
 ├── documents/
+│   ├── naming-conventions.md
 │   └── stock-price-design.md
 ├── scripts/
 │   ├── backfill_daily_prices.sh
@@ -64,6 +65,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ```
 
 株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
+
+命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
 
 ## sqlc
 
@@ -131,6 +134,29 @@ curl 'http://localhost:8080/daily-price-changes?date=2026-10-19'
 数値は文字列で返します。`change_rate`は、調整済み終値の差を比較元の調整済み終値で割り、100を掛けた百分率です（例: `"10.5"`は10.5%上昇）。比較元は銘柄ごとの対象日より前の直近の保存済み日足であり、必ずしも前営業日ではありません。
 
 対象日と比較元の両方のデータがある全銘柄を返します。並べ替えや上位10銘柄の抽出はまだ行いません。対象がなければ`200`と空配列`[]`、日付の未指定・不正は`400`、取得・計算の失敗は`500`を返します。
+
+## 出来高倍率の取得API
+
+```bash
+curl 'http://localhost:8080/daily-volume-ratios?date=2026-10-19'
+```
+
+レスポンス例:
+
+```json
+[
+  {
+    "symbol": "12340",
+    "trade_date": "2026-10-19",
+    "volume": "200.0",
+    "ratio": "2"
+  }
+]
+```
+
+`volume`は対象日の調整済み出来高、`ratio`は対象日より前の直近20件の調整済み出来高の平均に対する倍率です（`"2"`は2倍）。数値は文字列で返します。履歴は銘柄ごとの保存済み日足を使うため、20営業日より長い期間になることがあります。
+
+履歴が20件に満たない銘柄、平均出来高がゼロの銘柄は除外します。対象がなければ`200`と空配列`[]`、日付の未指定・不正は`400`、取得失敗は`500`を返します。並べ替えや件数制限は行いません。
 
 ## テスト
 
