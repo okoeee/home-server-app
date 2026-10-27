@@ -4,10 +4,14 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 現在は、GoとGinで実装したAPIをDocker Composeで起動できます。
 
+フロントエンドはSvelte・TypeScript・Viteのひな形を導入済みで、ローカルの開発サーバーで起動できます。APIとの接続と本番配信のDocker対応は未実装です。
+
 ## 必要な環境
 
 - Git
 - Go 1.27.1
+- Node.js（フロント開発用。Viteの要件は20.19以上の20系、または22.12以上）
+- npm
 - Docker
 - Docker Compose
 
@@ -46,11 +50,17 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   └── usecase/
 │   │       ├── dailyprice/
 │   │       └── stock/
-│   └── database/
-│       └── mysql/
-│           └── init/
-│               ├── table_schema.sql
-│               └── table_seed.sql
+│   ├── database/
+│   │   └── mysql/
+│   │       └── init/
+│   │           ├── table_schema.sql
+│   │           └── table_seed.sql
+│   └── web/
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── public/
+│       ├── src/
+│       └── vite.config.ts
 ├── documents/
 │   ├── architecture-decisions.md
 │   ├── naming-conventions.md
@@ -70,6 +80,27 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
+
+## フロントエンドの開発
+
+プロジェクトルートから次のコマンドを実行します。
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+ターミナルに表示されたURL（通常は`http://localhost:5173`）をブラウザで開きます。停止は`Ctrl+C`です。
+
+`apps/web`で型チェックと本番用ビルドを実行できます。
+
+```bash
+npm run check
+npm run build
+```
+
+ビルド結果は`apps/web/dist/`に出力されます。現在はnpmを使用し、`package-lock.json`をGitで管理します。`node_modules/`と`dist/`はignore済みです。
 
 ## sqlc
 
