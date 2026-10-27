@@ -52,6 +52,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │               ├── table_schema.sql
 │               └── table_seed.sql
 ├── documents/
+│   ├── architecture-decisions.md
 │   ├── naming-conventions.md
 │   └── stock-price-design.md
 ├── scripts/
@@ -65,6 +66,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ```
 
 株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
+
+構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
 
