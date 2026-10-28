@@ -17,6 +17,48 @@ Raspberry Pi 5で、自分の関心がある情報を集めて表示する。最
 
 APIはJSONを返し、株価の分析はGo側で行う。フロントエンドは表示と操作を担当する。
 
+## 構成要素と用途の一覧
+
+| 構成要素 | 主な用途 | このプロジェクトでの役割 |
+| --- | --- | --- |
+| Svelte | UIの構築 | ブラウザ上で画面を表示し、入力と表示状態を扱う |
+| TypeScript | 型による開発時の確認 | フロントのデータや関数の型を定義する。実行時にはJavaScriptになる |
+| Vite | フロント開発・ビルド | 開発サーバーと変更の即時反映、本番用ファイルの生成を担当する |
+| Node.js・npm | 開発・ビルドの実行環境と依存管理 | Viteなどを実行する。本番の配信用コンテナでは使用しない |
+| Caddy | Web配信・リバースプロキシ | ビルド済みファイルを配信し、`/api/*`をGo APIへ転送する |
+| Go・Gin | APIの実行 | HTTPリクエストを受け、データ取得や計算を行いJSONを返す |
+| MySQL | データの永続化 | 銘柄と株価日足を保存する |
+| Docker | 実行環境のイメージ化 | ビルド・配信・API・DBの環境を用意する |
+| Docker Compose | 複数コンテナの構成管理 | `web`・`api`・`db`の起動、接続、ポート公開を定義する |
+
+### ViteとCaddyの比較
+
+以下はツールの機能比較。対応している機能が、すべて現在の設定で有効になっているわけではない。
+
+| 比較 | Vite | Caddy |
+| --- | --- | --- |
+| 主な用途 | フロントエンド開発・ビルド | Web配信・リバースプロキシ |
+| 開発中のAPI転送 | `server.proxy`で対応 | `reverse_proxy`で対応 |
+| 本番のリバースプロキシ | 本構成では使用しない | Go APIへの転送を担当 |
+| 静的ファイル配信 | 開発サーバーとビルド結果のローカルプレビューで対応 | 本番用のビルド済みファイルを配信 |
+| フロントのビルド | ソースから`dist/`を生成 | 行わない |
+| ソース変更の即時反映 | 開発サーバーで対応 | 本構成では再ビルドして反映 |
+| HTTPS | 証明書などを設定して対応可能 | 条件に応じて証明書の取得・更新を自動化可能 |
+
+Viteは開発・ビルド、Caddyは本番の配信という分担にする。`vite preview`はビルド結果のローカル確認用であり、本番サーバーには使用しない。
+
+### 現在の使い分けと設定状況
+
+| 場面 | 入口・コマンド | 現在の動作 |
+| --- | --- | --- |
+| ローカル開発 | `npm run dev`、通常`http://localhost:5173` | Viteが画面を提供する。API転送とHTTPSは未設定 |
+| 本番用ビルド | `npm run build` | Viteが`dist/`を生成する。DockerではNode.jsのビルド段階で実行する |
+| Composeでの画面配信 | `http://localhost:3000` | Caddyがビルド済みファイルをHTTPで配信する |
+| ComposeでのAPI呼び出し | `http://localhost:3000/api/ping`など | Caddyが`/api`を除いて`api:8080`へ転送する |
+| APIへの直接アクセス | `http://localhost:8080/ping`など | 公開済みのAPIポートへ直接接続する。Caddyは経由しない |
+
+Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。画面からのAPI呼び出しと、開発用のViteプロキシは今後実装する。
+
 ## フロントエンドの構成
 
 `apps/web`にSvelte・TypeScript・Viteのひな形を導入済み。ローカルの開発サーバーまたはComposeの`web`サービスで起動する。Caddy経由のAPI転送は設定済みだが、株価画面と画面からのAPI呼び出しは未実装。
@@ -77,6 +119,8 @@ CloudFrontは配信元の手前でキャッシュ・配信するCDN。今回は�
 
 - [Svelteの概要](https://svelte.dev/docs/svelte/overview)
 - [Viteの導入ガイド](https://vite.dev/guide/)
+- [Viteの開発サーバー設定（API転送・HTTPS）](https://vite.dev/config/server-options.html)
+- [Viteのビルドとローカルプレビュー](https://vite.dev/guide/static-deploy.html)
 - [SvelteKitの概要](https://svelte.dev/docs/kit/introduction)
 - [Nginxの静的配信・プロキシ設定](https://nginx.org/en/docs/beginners_guide.html)
 - [Caddyの構成例](https://caddyserver.com/docs/caddyfile/patterns)
