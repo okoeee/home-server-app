@@ -1,0 +1,11 @@
+:80 {
+	# /apiを除いたパスでGo APIへ転送する。
+	handle_path /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /usr/share/caddy
+		file_server
+	}
+}
