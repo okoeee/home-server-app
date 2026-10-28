@@ -1,18 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { fetchDailyPriceChanges } from './api/daily-price-changes'
+  import { fetchLatestDailyPriceChanges } from './api/daily-price-changes'
   import DailyPriceChangeTable from './components/DailyPriceChangeTable.svelte'
   import type { DailyPriceChange } from './models/daily-price-change'
-  import { getTodayInJapan } from './date'
+  import { selectTopDailyPriceChanges } from './models/daily-price-change'
 
-  const date = getTodayInJapan()
+  let date = $state<string | null>(null)
   let changes = $state<DailyPriceChange[]>([])
   let loading = $state(true)
   let error = $state('')
 
   async function loadChanges() {
     try {
-      changes = await fetchDailyPriceChanges(date)
+      const result = await fetchLatestDailyPriceChanges()
+      date = result.trade_date
+      changes = selectTopDailyPriceChanges(result.changes)
     } catch (cause) {
       error = cause instanceof Error ? cause.message : '騰落率を取得できませんでした。'
     } finally {
@@ -28,7 +30,9 @@
 <main>
   <h1>株価の騰落率</h1>
 
-  <p>対象日：{date}（日本時間）</p>
+  {#if date}
+    <p>{date}時点（DBの最新取引日）</p>
+  {/if}
 
   <section aria-label="取得結果" aria-busy={loading}>
     {#if loading}
