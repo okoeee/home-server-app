@@ -30,6 +30,12 @@ FROM daily_prices as current_price
                         )
 WHERE current_price.trade_date = ?;
 
+-- name: GetLatestDailyPriceTradeDate :one
+SELECT trade_date
+FROM daily_prices
+ORDER BY trade_date DESC
+LIMIT 1;
+
 -- name: ListDailyVolumesByTradeDate :many
 SELECT
     symbol,

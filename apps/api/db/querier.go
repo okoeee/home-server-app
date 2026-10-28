@@ -10,6 +10,7 @@ import (
 )
 
 type Querier interface {
+	GetLatestDailyPriceTradeDate(ctx context.Context) (time.Time, error)
 	ListDailyPricesBySymbol(ctx context.Context, symbol string) ([]DailyPrice, error)
 	ListDailyPricesWithPreviousClose(ctx context.Context, tradeDate time.Time) ([]ListDailyPricesWithPreviousCloseRow, error)
 	ListDailyVolumeHistory(ctx context.Context, tradeDate time.Time) ([]ListDailyVolumeHistoryRow, error)
