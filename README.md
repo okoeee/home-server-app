@@ -4,7 +4,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 現在は、GoとGinで実装したAPIをDocker Composeで起動できます。
 
-フロントエンドはSvelte・TypeScript・Viteのひな形を導入済みで、ローカルの開発サーバーで起動できます。APIとの接続と本番配信のDocker対応は未実装です。
+フロントエンドはSvelte・TypeScript・Viteのひな形を導入済みで、ローカルの開発サーバーまたはCaddyのコンテナで表示できます。APIとの接続とComposeへの追加は未実装です。
 
 ## 必要な環境
 
@@ -56,6 +56,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │           ├── table_schema.sql
 │   │           └── table_seed.sql
 │   └── web/
+│       ├── .dockerignore
+│       ├── Dockerfile
 │       ├── package.json
 │       ├── package-lock.json
 │       ├── public/
@@ -101,6 +103,19 @@ npm run build
 ```
 
 ビルド結果は`apps/web/dist/`に出力されます。現在はnpmを使用し、`package-lock.json`をGitで管理します。`node_modules/`と`dist/`はignore済みです。
+
+## フロントエンドのDocker起動
+
+プロジェクトルートでビルドし、起動します。
+
+```bash
+docker build -t home-server-web ./apps/web
+docker run --rm -p 3000:80 home-server-web
+```
+
+`http://localhost:3000`で画面を確認できます。停止は`Ctrl+C`です。
+
+DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`だけをCaddyイメージへコピーします。Caddy公式イメージの標準設定でHTTPの80番ポートから配信し、起動コマンドも公式イメージのものを使用します。APIへの転送とComposeへの追加は次の段階で行います。
 
 ## sqlc
 
