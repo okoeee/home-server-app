@@ -4,7 +4,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 現在は、GoとGinで実装したAPIをDocker Composeで起動できます。
 
-フロントエンドはSvelte・TypeScript・Viteのひな形を導入済みで、ローカルの開発サーバーで起動できます。APIとの接続と本番配信のDocker対応は未実装です。
+フロントエンドはSvelte・TypeScript・Viteで実装し、ローカルの開発サーバーまたはComposeの`web`サービスで騰落率を表示できます。
 
 ## 必要な環境
 
@@ -56,6 +56,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │           ├── table_schema.sql
 │   │           └── table_seed.sql
 │   └── web/
+│       ├── .dockerignore
+│       ├── Caddyfile
+│       ├── Dockerfile
 │       ├── package.json
 │       ├── package-lock.json
 │       ├── public/
@@ -91,7 +94,9 @@ npm ci
 npm run dev
 ```
 
-ターミナルに表示されたURL（通常は`http://localhost:5173`）をブラウザで開きます。停止は`Ctrl+C`です。
+ターミナルに表示されたURL（通常は`http://localhost:5173`）をブラウザで開きます。停止は`Ctrl+C`です。APIを利用する場合は、先にプロジェクトルートで`docker compose up -d api`を実行します。Viteは`/api/*`から`/api`を除き、`http://localhost:8080`へ転送します。
+
+ページを開いた時点の今日（日本時間）の騰落率を自動取得し、全件表示します。日付入力フォームは設けません。表示件数を併記し、並べ替え・ページ分割・上位銘柄の抽出は行いません。読み込み中・データなし・取得エラーも表示します。休場日や未取得などで今日のデータがなければ、過去日へ切り替えず「データがありません」と表示します。比較元は銘柄ごとの直近の保存済み日足です。
 
 `apps/web`で型チェックと本番用ビルドを実行できます。
 
@@ -100,7 +105,27 @@ npm run check
 npm run build
 ```
 
+API通信のテストは`apps/web`で`npm test`を実行します。テストにはNode.js 22.12以上が必要です。
+
 ビルド結果は`apps/web/dist/`に出力されます。現在はnpmを使用し、`package-lock.json`をGitで管理します。`node_modules/`と`dist/`はignore済みです。
+
+## フロントエンドのDocker起動
+
+プロジェクトルートにDB設定を含む`.env`を用意し、ビルド・起動します。
+
+```bash
+docker compose up -d --build web
+```
+
+依存するAPIとMySQLも起動します。`http://localhost:3000`で画面を確認できます。API転送は次のコマンドで確認します。
+
+```bash
+curl http://localhost:3000/api/ping
+```
+
+`{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
+
+DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。`depends_on`は起動順を指定するもので、APIとDBの準備完了は待ちません。
 
 ## sqlc
 
