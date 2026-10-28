@@ -4,7 +4,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 現在は、GoとGinで実装したAPIをDocker Composeで起動できます。
 
-フロントエンドはSvelte・TypeScript・Viteのひな形を導入済みで、ローカルの開発サーバーまたはCaddyのコンテナで表示できます。APIとの接続とComposeへの追加は未実装です。
+フロントエンドはSvelte・TypeScript・Viteのひな形を導入済みで、ローカルの開発サーバーまたはComposeの`web`サービスで表示できます。Caddy経由のAPI転送は設定済みで、株価を表示する画面は未実装です。
 
 ## 必要な環境
 
@@ -57,6 +57,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │           └── table_seed.sql
 │   └── web/
 │       ├── .dockerignore
+│       ├── Caddyfile
 │       ├── Dockerfile
 │       ├── package.json
 │       ├── package-lock.json
@@ -106,16 +107,21 @@ npm run build
 
 ## フロントエンドのDocker起動
 
-プロジェクトルートでビルドし、起動します。
+プロジェクトルートにDB設定を含む`.env`を用意し、ビルド・起動します。
 
 ```bash
-docker build -t home-server-web ./apps/web
-docker run --rm -p 3000:80 home-server-web
+docker compose up -d --build web
 ```
 
-`http://localhost:3000`で画面を確認できます。停止は`Ctrl+C`です。
+依存するAPIとMySQLも起動します。`http://localhost:3000`で画面を確認できます。API転送は次のコマンドで確認します。
 
-DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`だけをCaddyイメージへコピーします。Caddy公式イメージの標準設定でHTTPの80番ポートから配信し、起動コマンドも公式イメージのものを使用します。APIへの転送とComposeへの追加は次の段階で行います。
+```bash
+curl http://localhost:3000/api/ping
+```
+
+`{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
+
+DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。`depends_on`は起動順を指定するもので、APIとDBの準備完了は待ちません。
 
 ## sqlc
 

@@ -19,7 +19,7 @@ APIはJSONを返し、株価の分析はGo側で行う。フロントエンド�
 
 ## フロントエンドの構成
 
-`apps/web`にSvelte・TypeScript・Viteのひな形を導入済み。ローカルの開発サーバーで起動でき、型チェックと本番用ビルドを確認している。株価画面とAPI接続は未実装で、Composeの`web`サービスもまだ存在しない。
+`apps/web`にSvelte・TypeScript・Viteのひな形を導入済み。ローカルの開発サーバーまたはComposeの`web`サービスで起動する。Caddy経由のAPI転送は設定済みだが、株価画面と画面からのAPI呼び出しは未実装。
 
 現在のパッケージ管理はnpmを使用し、`package-lock.json`を管理する。pnpmも候補として検討したが、移行は実施していない。
 
@@ -40,11 +40,11 @@ APIはJSONを返し、株価の分析はGo側で行う。フロントエンド�
 
 次に実装する株価画面は、日付の選択、騰落率と出来高倍率の表、読み込み中・データなし・エラーの表示に絞る。
 
-## 本番の配信構成（一部実装済み）
+## 本番の配信構成
 
 配信サーバーにはCaddyを採用した。`apps/web/Dockerfile`でNode.jsによるビルドとCaddyによる配信を分け、生成されたHTML・CSS・JavaScriptだけを配信用イメージへコピーする。Node.jsは本番の配信用コンテナでは常駐させない。
 
-現在はCaddy公式イメージの標準設定で静的ファイルをHTTPの80番ポートから配信する。フロントもDocker Composeで管理する予定だが、Composeへの追加と独自のCaddyfileによるAPI転送は未実装。以下はそれらを含む構成案。
+`apps/web/Caddyfile`で静的ファイル配信とAPI転送を設定する。Composeの`web`サービスはホストの3000番ポートをコンテナの80番ポートへ割り当て、`api`に依存する。
 
 ```mermaid
 flowchart LR
@@ -54,7 +54,7 @@ flowchart LR
     API --> DB[(MySQL)]
 ```
 
-Webサーバーを画面とAPIの共通の入口にする。フロントからは`/api/daily-volume-ratios`などの相対URLで呼び出し、Webサーバーが`/api`を除いてGo APIへ転送する。現在のGo APIのパスは`/daily-volume-ratios`などであり、この転送設定はまだ実装していない。
+Webサーバーを画面とAPIの共通の入口にする。`handle_path /api/*`で`/api`を除いて`api:8080`へ転送する。画面からは`/api/daily-volume-ratios`などの相対URLで呼び出せる。Go API側の`/daily-volume-ratios`などのパスは変更しない。
 
 ### 配信サーバーの比較と選定
 
