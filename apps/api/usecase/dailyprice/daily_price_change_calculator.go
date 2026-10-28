@@ -20,6 +20,21 @@ func NewDailyPriceChangeCalculator(
 	}
 }
 
+func (calculator *DailyPriceChangeCalculator) CalculateLatest(ctx context.Context) (model.LatestDailyPriceChanges, error) {
+	tradeDate, found, err := calculator.repository.GetLatestTradeDate(ctx)
+	if err != nil {
+		return model.LatestDailyPriceChanges{}, fmt.Errorf("get latest trade date: %w", err)
+	}
+	if !found {
+		return model.LatestDailyPriceChanges{Changes: []model.DailyPriceChange{}}, nil
+	}
+	changes, err := calculator.Calculate(ctx, tradeDate)
+	if err != nil {
+		return model.LatestDailyPriceChanges{}, err
+	}
+	return model.LatestDailyPriceChanges{TradeDate: &tradeDate, Changes: changes}, nil
+}
+
 func (calculate *DailyPriceChangeCalculator) Calculate(
 	ctx context.Context,
 	tradeDate time.Time,

@@ -12,6 +12,20 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const getLatestDailyPriceTradeDate = `-- name: GetLatestDailyPriceTradeDate :one
+SELECT trade_date
+FROM daily_prices
+ORDER BY trade_date DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestDailyPriceTradeDate(ctx context.Context) (time.Time, error) {
+	row := q.db.QueryRowContext(ctx, getLatestDailyPriceTradeDate)
+	var trade_date time.Time
+	err := row.Scan(&trade_date)
+	return trade_date, err
+}
+
 const listDailyPricesBySymbol = `-- name: ListDailyPricesBySymbol :many
 SELECT
     symbol,

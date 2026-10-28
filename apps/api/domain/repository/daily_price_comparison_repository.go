@@ -7,6 +7,7 @@ import (
 )
 
 type DailyPriceComparisonRepository interface {
+	GetLatestTradeDate(context.Context) (time.Time, bool, error)
 	ListByTradeDate(
 		context.Context,
 		time.Time,

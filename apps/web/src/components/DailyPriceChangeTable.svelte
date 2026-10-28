@@ -6,7 +6,7 @@
 
 <div class="table-container">
   <table>
-    <caption>騰落率一覧（{changes.length}件）</caption>
+    <caption>騰落率の降順・上位10件（表示：{changes.length}件）</caption>
     <thead>
       <tr>
         <th scope="col">銘柄コード</th>

@@ -4,6 +4,8 @@ import (
 	"api/db"
 	"api/domain/model"
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -14,6 +16,17 @@ type DailyPriceRepository struct {
 
 func NewDailyPriceRepository(queries *db.Queries) *DailyPriceRepository {
 	return &DailyPriceRepository{queries}
+}
+
+func (repository *DailyPriceRepository) GetLatestTradeDate(ctx context.Context) (time.Time, bool, error) {
+	date, err := repository.queries.GetLatestDailyPriceTradeDate(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return time.Time{}, false, nil
+	}
+	if err != nil {
+		return time.Time{}, false, fmt.Errorf("get latest daily price trade date: %w", err)
+	}
+	return date, true, nil
 }
 
 func (repository *DailyPriceRepository) ListVolumesByTradeDate(

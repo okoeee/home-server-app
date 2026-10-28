@@ -23,6 +23,13 @@ type fakeComparisonRepository struct {
 	comparisons     []model.DailyPriceComparison
 	err             error
 	listByTradeDate func(context.Context, time.Time)
+	latestDate      time.Time
+	latestFound     bool
+	latestErr       error
+}
+
+func (repository fakeComparisonRepository) GetLatestTradeDate(context.Context) (time.Time, bool, error) {
+	return repository.latestDate, repository.latestFound, repository.latestErr
 }
 
 func (repository fakeComparisonRepository) ListByTradeDate(ctx context.Context, date time.Time) ([]model.DailyPriceComparison, error) {

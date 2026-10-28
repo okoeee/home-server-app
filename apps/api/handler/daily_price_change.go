@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"api/domain/model"
 	"api/usecase/dailyprice"
 	"net/http"
 	"time"
@@ -15,6 +16,11 @@ type dailyPriceChangeResponse struct {
 	PreviousTradeDate  string `json:"previous_trade_date"`
 	PreviousClosePrice string `json:"previous_close_price"`
 	ChangeRate         string `json:"change_rate"`
+}
+
+type latestDailyPriceChangesResponse struct {
+	TradeDate *string                    `json:"trade_date"`
+	Changes   []dailyPriceChangeResponse `json:"changes"`
 }
 
 type DailyPriceChangeHandler struct {
@@ -38,6 +44,27 @@ func (handler *DailyPriceChangeHandler) GetDailyPriceChanges(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, toDailyPriceChangeResponses(changes))
+}
+
+func (handler *DailyPriceChangeHandler) GetLatestDailyPriceChanges(c *gin.Context) {
+	result, err := handler.calculator.CalculateLatest(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to calculate latest daily price changes"})
+		return
+	}
+	var tradeDate *string
+	if result.TradeDate != nil {
+		formatted := result.TradeDate.Format(time.DateOnly)
+		tradeDate = &formatted
+	}
+	c.JSON(http.StatusOK, latestDailyPriceChangesResponse{
+		TradeDate: tradeDate,
+		Changes:   toDailyPriceChangeResponses(result.Changes),
+	})
+}
+
+func toDailyPriceChangeResponses(changes []model.DailyPriceChange) []dailyPriceChangeResponse {
 	responses := make([]dailyPriceChangeResponse, 0, len(changes))
 	for _, change := range changes {
 		responses = append(responses, dailyPriceChangeResponse{
@@ -50,5 +77,5 @@ func (handler *DailyPriceChangeHandler) GetDailyPriceChanges(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, responses)
+	return responses
 }
