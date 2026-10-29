@@ -1,7 +1,8 @@
 package handler
 
 import (
-	"api/usecase/dailyprice"
+	"api/domain/model"
+	"context"
 	"net/http"
 	"time"
 
@@ -15,11 +16,15 @@ type dailyVolumeRatioResponse struct {
 	Ratio     string `json:"ratio"`
 }
 
-type DailyVolumeRatioHandler struct {
-	calculator *dailyprice.DailyVolumeRatioCalculator
+type DailyVolumeRatioCalculator interface {
+	Calculate(context.Context, time.Time) ([]model.DailyVolumeRatio, error)
 }
 
-func NewDailyVolumeRatioHandler(calculator *dailyprice.DailyVolumeRatioCalculator) *DailyVolumeRatioHandler {
+type DailyVolumeRatioHandler struct {
+	calculator DailyVolumeRatioCalculator
+}
+
+func NewDailyVolumeRatioHandler(calculator DailyVolumeRatioCalculator) *DailyVolumeRatioHandler {
 	return &DailyVolumeRatioHandler{calculator: calculator}
 }
 

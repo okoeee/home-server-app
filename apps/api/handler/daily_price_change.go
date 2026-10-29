@@ -2,7 +2,7 @@ package handler
 
 import (
 	"api/domain/model"
-	"api/usecase/dailyprice"
+	"context"
 	"net/http"
 	"time"
 
@@ -23,11 +23,16 @@ type latestDailyPriceChangesResponse struct {
 	Changes   []dailyPriceChangeResponse `json:"changes"`
 }
 
-type DailyPriceChangeHandler struct {
-	calculator *dailyprice.DailyPriceChangeCalculator
+type DailyPriceChangeCalculator interface {
+	Calculate(context.Context, time.Time) ([]model.DailyPriceChange, error)
+	CalculateLatest(context.Context) (model.LatestDailyPriceChanges, error)
 }
 
-func NewDailyPriceChangeHandler(calculator *dailyprice.DailyPriceChangeCalculator) *DailyPriceChangeHandler {
+type DailyPriceChangeHandler struct {
+	calculator DailyPriceChangeCalculator
+}
+
+func NewDailyPriceChangeHandler(calculator DailyPriceChangeCalculator) *DailyPriceChangeHandler {
 	return &DailyPriceChangeHandler{calculator: calculator}
 }
 
