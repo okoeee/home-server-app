@@ -116,7 +116,7 @@ func TestGetDailyPriceChanges(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/daily-price-changes"+test.query, nil)
+			request := httptest.NewRequest(http.MethodGet, "/v1/daily-price-changes"+test.query, nil)
 			called := false
 			repository := fakeComparisonRepository{
 				comparisons: test.comparisons,
@@ -188,4 +188,33 @@ func TestPing(t *testing.T) {
 		t.Fatalf("body = %q, want %q", got, want)
 	}
 
+}
+
+func TestAPIVersionRoutes(t *testing.T) {
+	calculator := dailyprice.NewDailyPriceChangeCalculator(fakeComparisonRepository{})
+	volumeCalculator := dailyprice.NewDailyVolumeRatioCalculator(fakeVolumeReader{})
+	engine := NewRouter(
+		handler.NewStockHandler(fakeQuerier{}),
+		handler.NewDailyPriceChangeHandler(calculator),
+		handler.NewDailyVolumeRatioHandler(volumeCalculator),
+	)
+	tests := []struct {
+		path       string
+		wantStatus int
+	}{
+		{path: "/v1/stocks/12340/prices", wantStatus: http.StatusOK},
+		{path: "/daily-price-changes?date=2026-10-19", wantStatus: http.StatusNotFound},
+		{path: "/daily-price-changes/latest", wantStatus: http.StatusNotFound},
+		{path: "/daily-volume-ratios?date=2026-10-19", wantStatus: http.StatusNotFound},
+		{path: "/stocks/12340/prices", wantStatus: http.StatusNotFound},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			engine.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, test.path, nil))
+			if recorder.Code != test.wantStatus {
+				t.Errorf("status = %d, want %d", recorder.Code, test.wantStatus)
+			}
+		})
+	}
 }

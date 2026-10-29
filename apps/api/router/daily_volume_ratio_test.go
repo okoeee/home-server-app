@@ -104,7 +104,7 @@ func TestGetDailyVolumeRatios(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/daily-volume-ratios"+test.query, nil)
+			request := httptest.NewRequest(http.MethodGet, "/v1/daily-volume-ratios"+test.query, nil)
 			calls := 0
 			reader := test.reader
 			reader.checkRequest = func(ctx context.Context, date time.Time) {
