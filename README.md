@@ -67,7 +67,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ├── documents/
 │   ├── architecture-decisions.md
 │   ├── naming-conventions.md
-│   └── stock-price-design.md
+│   ├── stock-price-design.md
+│   └── testing-policy.md
 ├── scripts/
 │   ├── backfill_daily_prices.sh
 │   ├── deploy.sh
@@ -83,6 +84,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
+
+テストの範囲・命名・書き方は、[documents/testing-policy.md](documents/testing-policy.md)を参照してください。
 
 ## フロントエンドの開発
 
