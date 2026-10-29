@@ -16,7 +16,6 @@ func NewRouter(
 	router.GET("/ping", handler.Ping)
 
 	v1 := router.Group("/v1")
-	v1.GET("/daily-price-changes", dailyPriceChangeHandler.GetDailyPriceChanges)
 	v1.GET("/daily-price-changes/latest", dailyPriceChangeHandler.GetLatestDailyPriceChanges)
 	v1.GET("/daily-volume-ratios", dailyVolumeRatioHandler.GetDailyVolumeRatios)
 

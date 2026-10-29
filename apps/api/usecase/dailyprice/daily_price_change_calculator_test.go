@@ -46,11 +46,11 @@ func TestDailyPriceChangeCalculatorCalculate_MapsComparisonsToResults(t *testing
 	wantRates := []decimal.Decimal{decimal.NewFromInt(10), decimal.NewFromInt(-5)}
 
 	// Act
-	got, err := calculator.Calculate(context.Background(), date)
+	got, err := calculator.calculate(context.Background(), date)
 
 	// Assert
 	if err != nil {
-		t.Fatalf("Calculate() unexpected error: %v", err)
+		t.Fatalf("calculate() unexpected error: %v", err)
 	}
 	if len(got) != len(comparisons) {
 		t.Fatalf("len(results) = %d, want %d", len(got), len(comparisons))
@@ -71,14 +71,14 @@ func TestDailyPriceChangeCalculatorCalculate_NoComparisonsReturnsEmptyResults(t 
 	calculator := NewDailyPriceChangeCalculator(priceComparisonRepositoryStub{})
 
 	// Act
-	got, err := calculator.Calculate(context.Background(), date)
+	got, err := calculator.calculate(context.Background(), date)
 
 	// Assert
 	if err != nil {
-		t.Fatalf("Calculate() unexpected error: %v", err)
+		t.Fatalf("calculate() unexpected error: %v", err)
 	}
 	if len(got) != 0 {
-		t.Errorf("Calculate() = %+v, want no results", got)
+		t.Errorf("calculate() = %+v, want no results", got)
 	}
 }
 
@@ -113,17 +113,17 @@ func TestDailyPriceChangeCalculatorCalculate_ErrorsReturnNoPartialResults(t *tes
 			calculator := NewDailyPriceChangeCalculator(test.repository)
 
 			// Act
-			got, err := calculator.Calculate(context.Background(), date)
+			got, err := calculator.calculate(context.Background(), date)
 
 			// Assert
 			if err == nil {
-				t.Fatal("Calculate() error = nil, want error")
+				t.Fatal("calculate() error = nil, want error")
 			}
 			if test.wantCause != nil && !errors.Is(err, test.wantCause) {
-				t.Errorf("Calculate() error = %v, want wrapped %v", err, test.wantCause)
+				t.Errorf("calculate() error = %v, want wrapped %v", err, test.wantCause)
 			}
 			if got != nil {
-				t.Errorf("Calculate() = %+v, want nil on error", got)
+				t.Errorf("calculate() = %+v, want nil on error", got)
 			}
 		})
 	}

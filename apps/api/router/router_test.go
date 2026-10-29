@@ -22,13 +22,8 @@ func (stockQuerierStub) ListDailyPricesBySymbol(context.Context, string) ([]db.D
 }
 
 type priceChangeCalculatorStub struct {
-	changesByDate map[time.Time][]model.DailyPriceChange
-	latest        model.LatestDailyPriceChanges
-	err           error
-}
-
-func (stub priceChangeCalculatorStub) Calculate(_ context.Context, date time.Time) ([]model.DailyPriceChange, error) {
-	return stub.changesByDate[date], stub.err
+	latest model.LatestDailyPriceChanges
+	err    error
 }
 
 func (stub priceChangeCalculatorStub) CalculateLatest(context.Context) (model.LatestDailyPriceChanges, error) {
@@ -88,6 +83,7 @@ func TestNewRouter_VersionedRoutes(t *testing.T) {
 		wantStatus int
 	}{
 		{path: "/v1/stocks/12340/prices", wantStatus: http.StatusOK},
+		{path: "/v1/daily-price-changes?date=2026-10-19", wantStatus: http.StatusNotFound},
 		{path: "/daily-price-changes?date=2026-10-19", wantStatus: http.StatusNotFound},
 		{path: "/daily-price-changes/latest", wantStatus: http.StatusNotFound},
 		{path: "/daily-volume-ratios?date=2026-10-19", wantStatus: http.StatusNotFound},
