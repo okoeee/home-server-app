@@ -6,7 +6,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func TestDailyPriceComparisonChangeRate(t *testing.T) {
+func TestChangeRate_Scenarios(t *testing.T) {
 	tests := []struct {
 		name               string
 		closePrice         string
@@ -48,13 +48,21 @@ func TestDailyPriceComparisonChangeRate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Arrange
 			comparison := DailyPriceComparison{
 				Symbol:             "12340",
 				ClosePrice:         decimal.RequireFromString(test.closePrice),
 				PreviousClosePrice: decimal.RequireFromString(test.previousClosePrice),
 			}
+			want := decimal.Zero
+			if !test.wantErr {
+				want = decimal.RequireFromString(test.want)
+			}
 
+			// Act
 			got, err := comparison.ChangeRate()
+
+			// Assert
 			if test.wantErr {
 				if err == nil {
 					t.Fatal("ChangeRate() error = nil, want error")
@@ -65,8 +73,6 @@ func TestDailyPriceComparisonChangeRate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ChangeRate() unexpected error: %v", err)
 			}
-
-			want := decimal.RequireFromString(test.want)
 
 			if !got.Equal(want) {
 				t.Errorf(

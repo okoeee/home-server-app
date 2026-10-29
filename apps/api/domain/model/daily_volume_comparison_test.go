@@ -6,7 +6,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func TestDailyVolumeComparisonVolumeRatio(t *testing.T) {
+func TestVolumeRatio_Scenarios(t *testing.T) {
 	tests := []struct {
 		name            string
 		volume          string
@@ -40,6 +40,7 @@ func TestDailyVolumeComparisonVolumeRatio(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Arrange
 			history := make([]decimal.Decimal, 0, len(test.previousVolumes))
 			for _, volume := range test.previousVolumes {
 				history = append(history, decimal.RequireFromString(volume))
@@ -49,11 +50,15 @@ func TestDailyVolumeComparisonVolumeRatio(t *testing.T) {
 				Volume:          decimal.RequireFromString(test.volume),
 				PreviousVolumes: history,
 			}
+			want := decimal.RequireFromString(test.want)
+
+			// Act
 			got, ok := comparison.VolumeRatio()
+
+			// Assert
 			if ok != test.wantOK {
 				t.Errorf("VolumeRatio() ok = %v, want %v", ok, test.wantOK)
 			}
-			want := decimal.RequireFromString(test.want)
 			if !got.Equal(want) {
 				t.Errorf("VolumeRatio() = %s, want %s", got, want)
 			}
