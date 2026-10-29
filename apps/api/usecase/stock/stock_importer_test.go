@@ -36,7 +36,8 @@ func TestImport_PropagatesRepositoryError(t *testing.T) {
 	}
 }
 
-func TestImporterImportsStocksInSymbolOrder(t *testing.T) {
+func TestImport_SavesStocksInSymbolOrder(t *testing.T) {
+	// Arrange
 	repository := &fakeRepository{}
 	importer := NewStockImporter(repository)
 
@@ -44,16 +45,23 @@ func TestImporterImportsStocksInSymbolOrder(t *testing.T) {
 		{Symbol: "86970"},
 		{Symbol: "72030"},
 	}
+	want := []string{"72030", "86970"}
 
-	if err := importer.Import(context.Background(), stocks); err != nil {
+	// Act
+	err := importer.Import(context.Background(), stocks)
+
+	// Assert
+	if err != nil {
 		t.Fatal(err)
+	}
+	if len(repository.stocks) != len(want) {
+		t.Fatalf("saved stocks = %d, want %d", len(repository.stocks), len(want))
 	}
 
 	got := []string{
 		repository.stocks[0].Symbol,
 		repository.stocks[1].Symbol,
 	}
-	want := []string{"72030", "86970"}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("symbols = %v, want %v", got, want)
