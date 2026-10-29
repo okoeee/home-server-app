@@ -57,6 +57,10 @@ Repositoryの実装が、利用側の小さなReaderインターフェースを�
 - 意味のある固定値には、用途を表す名前を付ける（`volumeRatioHistoryCount`など）。
 - 境界を含むかが重要な引数は、`beforeDate`などで意味を示し、必要に応じてコメントを添える。
 
+## テスト名
+
+Goのテスト関数名は`Test{関数名}_{シナリオ}`とする。具体例やテーブル駆動テストの命名は、[テスト方針](testing-policy.md#テスト名)を参照する。
+
 ## 参考資料
 
 - [Effective Go：Interface names](https://go.dev/doc/effective_go#interface-names)：振る舞いを表すインターフェース名の参考。

@@ -67,7 +67,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ├── documents/
 │   ├── architecture-decisions.md
 │   ├── naming-conventions.md
-│   └── stock-price-design.md
+│   ├── stock-price-design.md
+│   └── testing-policy.md
 ├── scripts/
 │   ├── backfill_daily_prices.sh
 │   ├── deploy.sh
@@ -83,6 +84,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
+
+テストの範囲・命名・書き方は、[documents/testing-policy.md](documents/testing-policy.md)を参照してください。
 
 ## フロントエンドの開発
 
@@ -199,32 +202,9 @@ curl 'http://localhost:3000/api/v1/daily-price-changes/latest'
 
 DBが空なら`200`と`{"trade_date":null,"changes":[]}`を返します。最新日に比較可能な銘柄がなくても、過去日には戻さず、その日付と空配列を返します。取得・計算失敗は`500`です。
 
-### 日付指定
-
-APIの起動後、対象日を`YYYY-MM-DD`形式で指定して取得します。
-
-```bash
-curl 'http://localhost:8080/v1/daily-price-changes?date=2026-10-19'
-```
-
-レスポンス例:
-
-```json
-[
-  {
-    "symbol": "12340",
-    "trade_date": "2026-10-19",
-    "close_price": "110.5",
-    "previous_trade_date": "2026-10-16",
-    "previous_close_price": "100.0",
-    "change_rate": "10.5"
-  }
-]
-```
-
 数値は文字列で返します。`change_rate`は、調整済み終値の差を比較元の調整済み終値で割り、100を掛けた百分率です（例: `"10.5"`は10.5%上昇）。比較元は銘柄ごとの対象日より前の直近の保存済み日足であり、必ずしも前営業日ではありません。
 
-対象日と比較元の両方のデータがある全銘柄を返します。並べ替えや上位10銘柄の抽出はまだ行いません。対象がなければ`200`と空配列`[]`、日付の未指定・不正は`400`、取得・計算の失敗は`500`を返します。
+APIは対象日と比較元の両方のデータがある全銘柄を返し、並べ替えや上位10銘柄の抽出はフロント側で行います。騰落率の取得は最新取得のみを公開し、日付指定の`/v1/daily-price-changes`は提供しません。
 
 ## 出来高倍率の取得API
 
@@ -257,6 +237,8 @@ API全体のテストは次のコマンドで実行します。
 cd apps/api
 go test ./...
 ```
+
+`apps/api/router`のHTTPテストはUsecaseをstubに置き換え、パス・入力検証・JSON・ステータスコードを確認します。実DBや外部APIは使用せず、計算や処理の組み合わせはDomain・Usecaseのテストで確認します。
 
 ## デプロイ
 

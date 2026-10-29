@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-func TestToStocks(t *testing.T) {
+func TestToStocks_MapsEquityMaster(t *testing.T) {
+	// Arrange
 	equityMasters := []jquantsmodel.EquityMaster{
 		{
 			Date:                "2026-10-15",
@@ -19,8 +20,12 @@ func TestToStocks(t *testing.T) {
 			ProductCategoryCode: "011",
 		},
 	}
+	wantDate := time.Date(2026, time.October, 15, 0, 0, 0, 0, time.UTC)
 
+	// Act
 	stocks, err := ToStocks(equityMasters)
+
+	// Assert
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +44,6 @@ func TestToStocks(t *testing.T) {
 		t.Errorf("CompanyName = %q, want %q", got, want)
 	}
 
-	wantDate := time.Date(2026, time.October, 15, 0, 0, 0, 0, time.UTC)
 	if got := stock.EffectiveDate; !got.Equal(wantDate) {
 		t.Errorf("EffectiveDate = %v, want %v", got, wantDate)
 	}
@@ -49,7 +53,8 @@ func TestToStocks(t *testing.T) {
 	}
 }
 
-func TestToStocksReturnsErrorForInvalidDate(t *testing.T) {
+func TestToStocks_InvalidDateReturnsError(t *testing.T) {
+	// Arrange
 	equityMasters := []jquantsmodel.EquityMaster{
 		{
 			Date: "invalid-date",
@@ -57,7 +62,10 @@ func TestToStocksReturnsErrorForInvalidDate(t *testing.T) {
 		},
 	}
 
+	// Act
 	_, err := ToStocks(equityMasters)
+
+	// Assert
 	if err == nil {
 		t.Fatal("ToStocks() error = nil, want error")
 	}

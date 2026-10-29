@@ -2,7 +2,7 @@ package handler
 
 import (
 	"api/domain/model"
-	"api/usecase/dailyprice"
+	"context"
 	"net/http"
 	"time"
 
@@ -23,28 +23,16 @@ type latestDailyPriceChangesResponse struct {
 	Changes   []dailyPriceChangeResponse `json:"changes"`
 }
 
+type DailyPriceChangeCalculator interface {
+	CalculateLatest(context.Context) (model.LatestDailyPriceChanges, error)
+}
+
 type DailyPriceChangeHandler struct {
-	calculator *dailyprice.DailyPriceChangeCalculator
+	calculator DailyPriceChangeCalculator
 }
 
-func NewDailyPriceChangeHandler(calculator *dailyprice.DailyPriceChangeCalculator) *DailyPriceChangeHandler {
+func NewDailyPriceChangeHandler(calculator DailyPriceChangeCalculator) *DailyPriceChangeHandler {
 	return &DailyPriceChangeHandler{calculator: calculator}
-}
-
-func (handler *DailyPriceChangeHandler) GetDailyPriceChanges(c *gin.Context) {
-	tradeDate, err := time.Parse(time.DateOnly, c.Query("date"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "date must be in YYYY-MM-DD format"})
-		return
-	}
-
-	changes, err := handler.calculator.Calculate(c.Request.Context(), tradeDate)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to calculate daily price changes"})
-		return
-	}
-
-	c.JSON(http.StatusOK, toDailyPriceChangeResponses(changes))
 }
 
 func (handler *DailyPriceChangeHandler) GetLatestDailyPriceChanges(c *gin.Context) {

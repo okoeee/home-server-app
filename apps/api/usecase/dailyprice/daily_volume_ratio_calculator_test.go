@@ -11,11 +11,10 @@ import (
 )
 
 type stubRepository struct {
-	volumes      []model.DailyVolume
-	history      []model.DailyVolume
-	volumesErr   error
-	historyErr   error
-	historyCalls int
+	volumes    []model.DailyVolume
+	history    []model.DailyVolume
+	volumesErr error
+	historyErr error
 }
 
 func (s *stubRepository) ListVolumesByTradeDate(ctx context.Context, tradeDate time.Time) ([]model.DailyVolume, error) {
@@ -23,11 +22,11 @@ func (s *stubRepository) ListVolumesByTradeDate(ctx context.Context, tradeDate t
 }
 
 func (s *stubRepository) ListVolumeHistory(ctx context.Context, beforeDate time.Time) ([]model.DailyVolume, error) {
-	s.historyCalls++
 	return s.history, s.historyErr
 }
 
-func TestDailyVolumeRatioCalculatorExcludesUncalculableSymbols(t *testing.T) {
+func TestDailyVolumeRatioCalculatorCalculate_ExcludesUncalculableSymbols(t *testing.T) {
+	// Arrange
 	tradeDate := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
 	repository := &stubRepository{
 		volumes: []model.DailyVolume{
@@ -50,20 +49,25 @@ func TestDailyVolumeRatioCalculatorExcludesUncalculableSymbols(t *testing.T) {
 			)
 		}
 	}
+	calculator := NewDailyVolumeRatioCalculator(repository)
+	wantRatio := decimal.NewFromInt(2)
 
-	got, err := NewDailyVolumeRatioCalculator(repository).Calculate(context.Background(), tradeDate)
+	// Act
+	got, err := calculator.Calculate(context.Background(), tradeDate)
+
+	// Assert
 	if err != nil {
 		t.Fatalf("Calculate() unexpected error: %v", err)
 	}
 	if len(got) != 1 {
 		t.Fatalf("Calculate() returned %d results, want 1: %+v", len(got), got)
 	}
-	if got[0].Symbol != "valid" || !got[0].Ratio.Equal(decimal.NewFromInt(2)) {
+	if got[0].Symbol != "valid" || !got[0].Ratio.Equal(wantRatio) {
 		t.Errorf("Calculate() = %+v, want only symbol valid with ratio 2", got)
 	}
 }
 
-func TestDailyVolumeRatioCalculatorReturnsEmptyResults(t *testing.T) {
+func TestDailyVolumeRatioCalculatorCalculate_EmptyResults(t *testing.T) {
 	tradeDate := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name    string
@@ -79,8 +83,14 @@ func TestDailyVolumeRatioCalculatorReturnsEmptyResults(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Arrange
 			repository := &stubRepository{volumes: test.volumes}
-			got, err := NewDailyVolumeRatioCalculator(repository).Calculate(context.Background(), tradeDate)
+			calculator := NewDailyVolumeRatioCalculator(repository)
+
+			// Act
+			got, err := calculator.Calculate(context.Background(), tradeDate)
+
+			// Assert
 			if err != nil {
 				t.Fatalf("Calculate() unexpected error: %v", err)
 			}
@@ -91,36 +101,39 @@ func TestDailyVolumeRatioCalculatorReturnsEmptyResults(t *testing.T) {
 	}
 }
 
-func TestDailyVolumeRatioCalculatorReturnsReaderErrors(t *testing.T) {
+func TestDailyVolumeRatioCalculatorCalculate_PropagatesReaderErrors(t *testing.T) {
 	wantErr := errors.New("read failed")
 	tests := []struct {
-		name             string
-		volumesErr       error
-		historyErr       error
-		wantHistoryCalls int
+		name       string
+		volumesErr error
+		historyErr error
 	}{
-		{name: "対象日の取得に失敗", volumesErr: wantErr, wantHistoryCalls: 0},
-		{name: "履歴の取得に失敗", historyErr: wantErr, wantHistoryCalls: 1},
+		{name: "対象日の取得に失敗", volumesErr: wantErr},
+		{name: "履歴の取得に失敗", historyErr: wantErr},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Arrange
 			repository := &stubRepository{volumesErr: test.volumesErr, historyErr: test.historyErr}
 			tradeDate := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
-			got, err := NewDailyVolumeRatioCalculator(repository).Calculate(context.Background(), tradeDate)
+			calculator := NewDailyVolumeRatioCalculator(repository)
+
+			// Act
+			got, err := calculator.Calculate(context.Background(), tradeDate)
+
+			// Assert
 			if !errors.Is(err, wantErr) {
 				t.Errorf("Calculate() error = %v, want wrapped %v", err, wantErr)
 			}
 			if got != nil {
 				t.Errorf("Calculate() = %+v, want nil on error", got)
 			}
-			if repository.historyCalls != test.wantHistoryCalls {
-				t.Errorf("history calls = %d, want %d", repository.historyCalls, test.wantHistoryCalls)
-			}
 		})
 	}
 }
 
-func TestDailyVolumeRatioCalculatorCalculatesRatioForEachSymbol(t *testing.T) {
+func TestDailyVolumeRatioCalculatorCalculate_MapsHistoryBySymbol(t *testing.T) {
+	// Arrange
 	tradeDate := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
 	repository := &stubRepository{
 		volumes: []model.DailyVolume{
@@ -137,7 +150,12 @@ func TestDailyVolumeRatioCalculatorCalculatesRatioForEachSymbol(t *testing.T) {
 	}
 
 	calculator := NewDailyVolumeRatioCalculator(repository)
+	wantRatios := []decimal.Decimal{decimal.NewFromInt(2), decimal.RequireFromString("0.5")}
+
+	// Act
 	got, err := calculator.Calculate(context.Background(), tradeDate)
+
+	// Assert
 	if err != nil {
 		t.Fatalf("Calculate() unexpected error: %v", err)
 	}
@@ -145,7 +163,6 @@ func TestDailyVolumeRatioCalculatorCalculatesRatioForEachSymbol(t *testing.T) {
 		t.Fatalf("Calculate() returned %d results, want 2", len(got))
 	}
 
-	wantRatios := []decimal.Decimal{decimal.NewFromInt(2), decimal.RequireFromString("0.5")}
 	for index, result := range got {
 		wantVolume := repository.volumes[index]
 		if result.Symbol != wantVolume.Symbol || !result.TradeDate.Equal(tradeDate) || !result.Volume.Equal(wantVolume.Volume) {

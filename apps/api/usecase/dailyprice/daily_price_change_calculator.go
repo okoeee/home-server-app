@@ -28,19 +28,19 @@ func (calculator *DailyPriceChangeCalculator) CalculateLatest(ctx context.Contex
 	if !found {
 		return model.LatestDailyPriceChanges{Changes: []model.DailyPriceChange{}}, nil
 	}
-	changes, err := calculator.Calculate(ctx, tradeDate)
+	changes, err := calculator.calculate(ctx, tradeDate)
 	if err != nil {
 		return model.LatestDailyPriceChanges{}, err
 	}
 	return model.LatestDailyPriceChanges{TradeDate: &tradeDate, Changes: changes}, nil
 }
 
-func (calculate *DailyPriceChangeCalculator) Calculate(
+func (calculator *DailyPriceChangeCalculator) calculate(
 	ctx context.Context,
 	tradeDate time.Time,
 ) ([]model.DailyPriceChange, error) {
 
-	comparisons, err := calculate.repository.ListByTradeDate(ctx, tradeDate)
+	comparisons, err := calculator.repository.ListByTradeDate(ctx, tradeDate)
 	if err != nil {
 		return nil, fmt.Errorf("daily price change calculator: %w", err)
 	}
