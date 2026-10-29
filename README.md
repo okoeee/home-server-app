@@ -21,7 +21,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 .
 ├── .github/
 │   └── workflows/
-│       └── api-ci.yaml
+│       └── api-test.yaml
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile
@@ -45,6 +45,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   │   ├── daily_prices.sql
 │   │   │   └── stocks.sql
 │   │   ├── main.go
+│   │   ├── oapi-codegen.yaml
+│   │   ├── openapi/
+│   │   │   └── models.gen.go
 │   │   ├── router/
 │   │   ├── sqlc.yaml
 │   │   └── usecase/
@@ -69,9 +72,12 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── naming-conventions.md
 │   ├── stock-price-design.md
 │   └── testing-policy.md
+├── openapi/
+│   └── openapi.yaml
 ├── scripts/
 │   ├── backfill_daily_prices.sh
 │   ├── deploy.sh
+│   ├── gen_openapi.sh
 │   ├── gen_sqlc.sh
 │   ├── import_daily_prices.sh
 │   └── import_stocks.sh
@@ -129,6 +135,22 @@ curl http://localhost:3000/api/ping
 `{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
 
 DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。`depends_on`は起動順を指定するもので、APIとDBの準備完了は待ちません。
+
+## OpenAPIとGoモデルの生成
+
+API仕様は[openapi/openapi.yaml](openapi/openapi.yaml)で管理します。Go APIへ直接接続する場合のパスを定義し、Caddy・Vite経由では先頭に`/api`を付けます。
+
+仕様または`apps/api/oapi-codegen.yaml`を変更した場合は、プロジェクトルートで実行します。
+
+```bash
+./scripts/gen_openapi.sh
+```
+
+固定バージョンの`oapi-codegen v2.8.1`を`go run`で実行します。ツールの取得・バージョン解決にネットワーク接続を使用します。生成先は`apps/api/openapi/models.gen.go`で、生成ファイルはGit管理し、直接編集しません。仕様・設定・生成コード・利用側の変更は同じPRに含めます。
+
+生成するのはAPI用モデルだけです。Handler・ルート・通信処理・入力検証は手書きのままにし、Domainやsqlcのモデルとは分けます。日付・数値は既存のJSON表現に合わせて文字列で扱います。最新取引日の`null`と一覧の空配列も維持します。モデル生成だけで実行時の入力・レスポンス検証が追加されるわけではありません。
+
+TypeScriptの型生成とCIでの再生成差分チェックは、次の段階で追加します。
 
 ## sqlc
 

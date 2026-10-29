@@ -88,6 +88,14 @@ Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。
 
 最新日の取得には`GetLatestDailyPriceTradeDate`を使う。Usecaseの公開メソッドは`CalculateLatest`だけとし、日付を受け取る計算処理は非公開の`calculate`に分ける。DBが空なら対象日は`null`で一覧は空配列とする。最新日に比較元のある銘柄がなくても、その日付を維持する。「最新」は取り込み完了や市場の最新営業日を保証しないため、対象日を明示する。
 
+## OpenAPIとAPI用モデル
+
+`openapi/openapi.yaml`をHTTP APIの仕様として管理し、`oapi-codegen v2.8.1`でGoのAPI用モデルを生成する。設定は`apps/api/oapi-codegen.yaml`、生成先は`apps/api/openapi/models.gen.go`とする。生成手順はプロジェクトルートから`./scripts/gen_openapi.sh`を実行する。
+
+対象は現在の4エンドポイント（`/ping`と`/v1`配下の3つのデータ取得API）。Domainやsqlcのモデルを公開せず、Handlerで生成モデルへ変換する。成功・エラーレスポンスには生成モデルを使用し、日付・数値の文字列、最新日がない場合の`null`、結果なしの空配列を維持する。日付の`format: date`は仕様に残し、Go側は`x-go-type: string`で既存の表現に合わせる。
+
+生成範囲はモデルに限定し、Handler・ルート・通信処理は手書きとする。入力検証も引き続きHandlerが担当する。生成コードはGit管理し、生成ツールはバージョンを固定して実行する。TypeScriptの型生成とCIでの再生成差分チェックは未導入。
+
 ## 本番の配信構成
 
 配信サーバーにはCaddyを採用した。`apps/web/Dockerfile`でNode.jsによるビルドとCaddyによる配信を分け、生成されたHTML・CSS・JavaScriptだけを配信用イメージへコピーする。Node.jsは本番の配信用コンテナでは常駐させない。
