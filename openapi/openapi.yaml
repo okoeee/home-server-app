@@ -1,0 +1,206 @@
+openapi: 3.0.3
+info:
+  title: Home Server API
+  version: 1.0.0
+  description: 自宅サーバーに保存した株価と分析結果を取得するAPI。
+servers:
+  - url: http://localhost:8080
+    description: Go APIへの直接接続
+  - url: http://localhost:3000/api
+    description: Caddy経由
+paths:
+  /ping:
+    get:
+      operationId: getPing
+      summary: 稼働確認
+      responses:
+        '200':
+          description: APIが応答可能。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+  /v1/stocks/{symbol}/prices:
+    get:
+      operationId: getDailyPrices
+      summary: 銘柄の株価日足を取得する
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          description: 銘柄コード（例：13010）。
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取引日の昇順。対象がなければ空配列。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyPriceResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/daily-price-changes/latest:
+    get:
+      operationId: getLatestDailyPriceChanges
+      summary: 最新の保存済み取引日の騰落率を取得する
+      description: |
+        daily_pricesの最も新しい取引日を使用する。市場の最新営業日や取り込み完了を保証しない。
+        比較元は銘柄ごとの対象日より前の直近の保存済み日足とし、必ずしも前営業日ではない。
+        比較元がある全銘柄を返し、並べ替え・件数制限は行わない。
+      responses:
+        '200':
+          description: DBが空なら日付はnullで一覧は空配列。対象日の結果が空でも日付は維持する。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LatestDailyPriceChangesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/daily-volume-ratios:
+    get:
+      operationId: getDailyVolumeRatios
+      summary: 指定日の出来高倍率を取得する
+      description: |
+        対象日の調整済み出来高を、対象日を含まない銘柄ごとの直近20件の調整済み出来高平均で割る。
+        保存済み日足を使用するため20営業日より長い期間になることがある。
+        履歴が20件に満たない銘柄、平均出来高がゼロの銘柄は返さない。
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: 対象日（YYYY-MM-DD）。
+          schema:
+            $ref: '#/components/schemas/TradeDate'
+      responses:
+        '200':
+          description: 並べ替え・件数制限は行わない。対象がなければ空配列。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyVolumeRatioResponse'
+        '400':
+          description: 日付の未指定・形式不正・存在しない日付。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: date must be in YYYY-MM-DD format
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    InternalServerError:
+      description: データ取得または計算に失敗した。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    TradeDate:
+      type: string
+      format: date
+      description: 取引日（YYYY-MM-DD）。JSON表現に合わせGoでも文字列を使用する。
+      x-go-type: string
+      example: '2026-10-19'
+    DecimalString:
+      type: string
+      description: 精度を保持するため文字列で返す10進数。
+      example: '110.5'
+    PingResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: pong
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ。
+    DailyPriceResponse:
+      type: object
+      required: [symbol, trade_date, open_price, high_price, low_price, close_price, volume]
+      properties:
+        symbol:
+          type: string
+          description: 銘柄コード。
+        trade_date:
+          $ref: '#/components/schemas/TradeDate'
+        open_price:
+          description: 調整済み始値（円）。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
+        high_price:
+          description: 調整済み高値（円）。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
+        low_price:
+          description: 調整済み安値（円）。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
+        close_price:
+          description: 調整済み終値（円）。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
+        volume:
+          description: 調整済み出来高。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
+    DailyPriceChangeResponse:
+      type: object
+      required: [symbol, trade_date, close_price, previous_trade_date, previous_close_price, change_rate]
+      properties:
+        symbol:
+          type: string
+          description: 銘柄コード。
+        trade_date:
+          $ref: '#/components/schemas/TradeDate'
+        close_price:
+          $ref: '#/components/schemas/DecimalString'
+        previous_trade_date:
+          $ref: '#/components/schemas/TradeDate'
+        previous_close_price:
+          $ref: '#/components/schemas/DecimalString'
+        change_rate:
+          description: 騰落率の百分率（10.5は10.5%上昇）。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
+    LatestDailyPriceChangesResponse:
+      type: object
+      required: [trade_date, changes]
+      properties:
+        trade_date:
+          type: string
+          format: date
+          nullable: true
+          x-go-type: string
+          description: 最新の保存済み取引日。DBが空ならnull。キーは常に返す。
+          example: '2026-10-19'
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyPriceChangeResponse'
+    DailyVolumeRatioResponse:
+      type: object
+      required: [symbol, trade_date, volume, ratio]
+      properties:
+        symbol:
+          type: string
+          description: 銘柄コード。
+        trade_date:
+          $ref: '#/components/schemas/TradeDate'
+        volume:
+          $ref: '#/components/schemas/DecimalString'
+        ratio:
+          description: 出来高倍率（1.5は1.5倍）。百分率ではない。
+          allOf:
+            - $ref: '#/components/schemas/DecimalString'
