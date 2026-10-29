@@ -261,6 +261,8 @@ cd apps/api
 go test ./...
 ```
 
+`apps/api/router`のHTTPテストはUsecaseをstubに置き換え、パス・入力検証・JSON・ステータスコードを確認します。実DBや外部APIは使用せず、計算や処理の組み合わせはDomain・Usecaseのテストで確認します。
+
 ## デプロイ
 
 mainブランチへマージした変更は、プロジェクトルートで次のスクリプトを実行して反映します。
