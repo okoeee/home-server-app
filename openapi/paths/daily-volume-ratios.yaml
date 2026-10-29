@@ -1,0 +1,33 @@
+get:
+  operationId: getDailyVolumeRatios
+  summary: 指定日の出来高倍率を取得する
+  description: |
+    対象日の調整済み出来高を、対象日を含まない銘柄ごとの直近20件の調整済み出来高平均で割る。
+    保存済み日足を使用するため20営業日より長い期間になることがある。
+    履歴が20件に満たない銘柄、平均出来高がゼロの銘柄は返さない。
+  parameters:
+    - name: date
+      in: query
+      required: true
+      description: 対象日（YYYY-MM-DD）。
+      schema:
+        $ref: '../schemas/common.yaml#/TradeDate'
+  responses:
+    '200':
+      description: 並べ替え・件数制限は行わない。対象がなければ空配列。
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/daily-volume-ratio.yaml#/DailyVolumeRatioResponse'
+    '400':
+      description: 日付の未指定・形式不正・存在しない日付。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            message: date must be in YYYY-MM-DD format
+    '500':
+      $ref: '../responses/common.yaml#/InternalServerError'

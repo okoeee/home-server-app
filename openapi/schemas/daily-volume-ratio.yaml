@@ -1,0 +1,15 @@
+DailyVolumeRatioResponse:
+  type: object
+  required: [symbol, trade_date, volume, ratio]
+  properties:
+    symbol:
+      type: string
+      description: 銘柄コード。
+    trade_date:
+      $ref: './common.yaml#/TradeDate'
+    volume:
+      $ref: './common.yaml#/DecimalString'
+    ratio:
+      description: 出来高倍率（1.5は1.5倍）。百分率ではない。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'

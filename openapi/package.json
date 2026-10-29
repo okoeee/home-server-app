@@ -1,0 +1,10 @@
+{
+  "name": "home-server-openapi",
+  "private": true,
+  "scripts": {
+    "bundle": "redocly bundle openapi.yaml --output dist/openapi.yaml --component-renaming-conflicts-severity=error"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.71.2"
+  }
+}

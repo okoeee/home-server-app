@@ -1,0 +1,6 @@
+InternalServerError:
+  description: データ取得または計算に失敗した。
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/common.yaml#/ErrorResponse'
