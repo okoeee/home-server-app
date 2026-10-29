@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"api/openapi"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -8,8 +9,8 @@ import (
 
 func Ping(c *gin.Context) {
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "pong",
+	c.JSON(http.StatusOK, openapi.PingResponse{
+		Message: "pong",
 	})
 
 }
