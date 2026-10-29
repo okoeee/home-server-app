@@ -14,11 +14,13 @@ func NewRouter(
 	router := gin.Default()
 
 	router.GET("/ping", handler.Ping)
-	router.GET("/daily-price-changes", dailyPriceChangeHandler.GetDailyPriceChanges)
-	router.GET("/daily-price-changes/latest", dailyPriceChangeHandler.GetLatestDailyPriceChanges)
-	router.GET("/daily-volume-ratios", dailyVolumeRatioHandler.GetDailyVolumeRatios)
 
-	router.GET(
+	v1 := router.Group("/v1")
+	v1.GET("/daily-price-changes", dailyPriceChangeHandler.GetDailyPriceChanges)
+	v1.GET("/daily-price-changes/latest", dailyPriceChangeHandler.GetLatestDailyPriceChanges)
+	v1.GET("/daily-volume-ratios", dailyVolumeRatioHandler.GetDailyVolumeRatios)
+
+	v1.GET(
 		"/stocks/:symbol/prices",
 		stockHandler.GetDailyPrices,
 	)

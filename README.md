@@ -169,10 +169,12 @@ MySQLコンテナを起動し、`.env`にJ-QuantsのAPIキーとDB設定を用�
 
 ## 騰落率の取得API
 
+データ取得APIのGo側のパスは`/v1`で始まります。Caddy・Vite経由では`/api/v1/...`を使用し、転送時には`/api`だけを除去します。バージョンなしの旧データ取得パスは提供しません。稼働確認用の`/ping`はバージョン外に残します。
+
 ### 最新の保存済み取引日
 
 ```bash
-curl 'http://localhost:3000/api/daily-price-changes/latest'
+curl 'http://localhost:3000/api/v1/daily-price-changes/latest'
 ```
 
 レスポンス例:
@@ -202,7 +204,7 @@ DBが空なら`200`と`{"trade_date":null,"changes":[]}`を返します。最新
 APIの起動後、対象日を`YYYY-MM-DD`形式で指定して取得します。
 
 ```bash
-curl 'http://localhost:8080/daily-price-changes?date=2026-10-19'
+curl 'http://localhost:8080/v1/daily-price-changes?date=2026-10-19'
 ```
 
 レスポンス例:
@@ -227,7 +229,7 @@ curl 'http://localhost:8080/daily-price-changes?date=2026-10-19'
 ## 出来高倍率の取得API
 
 ```bash
-curl 'http://localhost:8080/daily-volume-ratios?date=2026-10-19'
+curl 'http://localhost:8080/v1/daily-volume-ratios?date=2026-10-19'
 ```
 
 レスポンス例:

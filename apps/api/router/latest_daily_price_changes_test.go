@@ -75,7 +75,7 @@ func TestGetLatestDailyPriceChanges(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/daily-price-changes/latest", nil)
+			request := httptest.NewRequest(http.MethodGet, "/v1/daily-price-changes/latest", nil)
 			listCalled := false
 			repository := test.repository
 			repository.listByTradeDate = func(ctx context.Context, gotDate time.Time) {

@@ -9,7 +9,7 @@ test('1回の通信で最新取引日と全件を取得する', async (t) => {
   ]
   const result = { trade_date: '2026-10-19', changes }
   const fetchMock = t.mock.method(globalThis, 'fetch', async (url) => {
-    assert.equal(url, '/api/daily-price-changes/latest')
+    assert.equal(url, '/api/v1/daily-price-changes/latest')
     return Response.json(result)
   })
   assert.deepEqual(await fetchLatestDailyPriceChanges(), result)
