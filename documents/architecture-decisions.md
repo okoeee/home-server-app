@@ -92,13 +92,13 @@ Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。
 
 `openapi/openapi.yaml`を入口としてHTTP APIの仕様を管理する。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分割し、`$ref`で参照する。仕様が増えても機能ごとに編集できるようにし、モデル生成の方式は維持する。
 
-Redocly CLI 2.71.2で仕様を`openapi/dist/openapi.yaml`へ結合してから、`oapi-codegen v2.8.1`でGoモデルを生成する。OpenAPI用のnpm依存は`openapi/package.json`と`package-lock.json`で管理し、フロントとは分ける。初回はプロジェクトルートで`npm --prefix openapi ci`、生成時は`./scripts/gen_openapi.sh`を実行する。Go側の設定は`apps/api/oapi-codegen.yaml`、生成先は`apps/api/openapi/models.gen.go`。中間の結合YAMLと`node_modules/`はGit管理しない。
+Redocly CLI 2.71.2で仕様を`openapi/dist/openapi.yaml`へ結合してから、`oapi-codegen v2.8.1`でGoモデル、`openapi-typescript 7.13.0`でTypeScriptの型を生成する。OpenAPI用のnpm依存は`openapi/package.json`と`package-lock.json`で管理し、フロントとは分ける。初回はプロジェクトルートで`npm --prefix openapi ci`、生成時は`./scripts/gen_openapi.sh`を実行する。Go側の設定は`apps/api/oapi-codegen.yaml`、生成先は`apps/api/openapi/models.gen.go`。TypeScriptの生成先は`apps/web/src/api/generated/schema.d.ts`。`--root-types --root-types-no-schema-prefix`でトップレベルの型エイリアスを生成し、利用側は生成した型名を直接importする。手書きの型エイリアスは設けない。中間の結合YAMLと`node_modules/`はGit管理しない。
 
 モデル名は仕様全体で一意にし、共通モデルは参照で共有する。Redoclyは既定では同名で内容が異なるスキーマを警告付きで自動改名するが、本構成では`--component-renaming-conflicts-severity=error`を指定する。生成モデル名が意図せず変わることを避けるため、衝突時は結合を失敗させて定義側を修正する。同じYAMLマップ内のキーの重複はパースエラーとする。
 
 対象は現在の4エンドポイント（`/ping`と`/v1`配下の3つのデータ取得API）。Domainやsqlcのモデルを公開せず、Handlerで生成モデルへ変換する。成功・エラーレスポンスには生成モデルを使用し、日付・数値の文字列、最新日がない場合の`null`、結果なしの空配列を維持する。日付の`format: date`は仕様に残し、Go側は`x-go-type: string`で既存の表現に合わせる。
 
-生成範囲はモデルに限定し、Handler・ルート・通信処理は手書きとする。入力検証も引き続きHandlerが担当する。生成コードはGit管理し、生成ツールはバージョンを固定して実行する。TypeScriptの型生成とCIでの再生成差分チェックは未導入。
+生成範囲はモデルに限定し、Handler・ルート・通信処理は手書きとする。入力検証も引き続きHandlerが担当する。生成コードはGit管理し、生成ツールはバージョンを固定して実行する。CIでの再生成差分チェックは未導入。
 
 ## 本番の配信構成
 

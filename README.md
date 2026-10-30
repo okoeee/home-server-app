@@ -66,6 +66,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │       ├── package-lock.json
 │       ├── public/
 │       ├── src/
+│       │   └── api/generated/schema.d.ts
 │       └── vite.config.ts
 ├── documents/
 │   ├── architecture-decisions.md
@@ -141,7 +142,7 @@ curl http://localhost:3000/api/ping
 
 DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。`depends_on`は起動順を指定するもので、APIとDBの準備完了は待ちません。
 
-## OpenAPIとGoモデルの生成
+## OpenAPIとGo・TypeScriptモデルの生成
 
 API仕様の入口は[openapi/openapi.yaml](openapi/openapi.yaml)です。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分け、`$ref`で参照します。Go APIへ直接接続する場合のパスを定義し、Caddy・Vite経由では先頭に`/api`を付けます。
 
@@ -157,13 +158,22 @@ npm --prefix openapi ci
 ./scripts/gen_openapi.sh
 ```
 
-Redocly CLI 2.71.2で分割した仕様を`openapi/dist/openapi.yaml`へ結合し、固定バージョンの`oapi-codegen v2.8.1`を`go run`で実行します。ツールの取得・バージョン解決にネットワーク接続を使用します。生成先は`apps/api/openapi/models.gen.go`で、生成ファイルはGit管理し、直接編集しません。結合結果の`openapi/dist/`と依存関係の`openapi/node_modules/`はGit管理しません。仕様・設定・ロックファイル・生成コード・利用側の変更は同じPRに含めます。
+Redocly CLI 2.71.2で分割した仕様を`openapi/dist/openapi.yaml`へ結合し、次のツールでモデルを生成します。
+
+| 対象 | ツール | 生成先 |
+| --- | --- | --- |
+| Go | `oapi-codegen v2.8.1`（`go run`） | `apps/api/openapi/models.gen.go` |
+| TypeScript | `openapi-typescript 7.13.0` | `apps/web/src/api/generated/schema.d.ts` |
+
+ツールの取得・バージョン解決にネットワーク接続を使用します。生成ファイルはGit管理し、直接編集しません。結合結果の`openapi/dist/`と依存関係の`openapi/node_modules/`はGit管理しません。仕様・設定・ロックファイル・生成コード・利用側の変更は同じPRに含めます。
+
+TypeScriptは`--root-types --root-types-no-schema-prefix`を指定し、`DailyPriceChangeResponse`などをトップレベルの型エイリアスとして生成します。利用側は`src/api/generated/schema.d.ts`から直接importし、手書きの型エイリアスは設けません。表示用の上位10件の選択処理は引き続き`src/models/daily-price-change.ts`で管理します。
 
 モデル名は仕様全体で一意にし、共通モデルは参照で再利用します。同名で内容が異なるスキーマを結合するときは、`--component-renaming-conflicts-severity=error`により自動改名せず失敗させます。同じYAMLマップ内のキーの重複もパースエラーになります。
 
 生成するのはAPI用モデルだけです。Handler・ルート・通信処理・入力検証は手書きのままにし、Domainやsqlcのモデルとは分けます。日付・数値は既存のJSON表現に合わせて文字列で扱います。最新取引日の`null`と一覧の空配列も維持します。モデル生成だけで実行時の入力・レスポンス検証が追加されるわけではありません。
 
-TypeScriptの型生成とCIでの再生成差分チェックは、次の段階で追加します。
+CIでの再生成差分チェックは、次の段階で追加します。
 
 ## sqlc
 
