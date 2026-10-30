@@ -164,6 +164,15 @@ export interface components {
     headers: never;
     pathItems: never;
 }
+export type TradeDate = components['schemas']['TradeDate'];
+export type DecimalString = components['schemas']['DecimalString'];
+export type PingResponse = components['schemas']['PingResponse'];
+export type ErrorResponse = components['schemas']['ErrorResponse'];
+export type DailyPriceResponse = components['schemas']['DailyPriceResponse'];
+export type DailyPriceChangeResponse = components['schemas']['DailyPriceChangeResponse'];
+export type LatestDailyPriceChangesResponse = components['schemas']['LatestDailyPriceChangesResponse'];
+export type DailyVolumeRatioResponse = components['schemas']['DailyVolumeRatioResponse'];
+export type ResponseInternalServerError = components['responses']['InternalServerError'];
 export type $defs = Record<string, never>;
 export interface operations {
     getPing: {
