@@ -11,16 +11,17 @@ import (
 
 type DailyVolumeReader interface {
 	ListVolumesByTradeDate(ctx context.Context, tradeDate time.Time) ([]model.DailyVolume, error)
+	// ListVolumeHistoryはbeforeDateを含めず、銘柄ごとの直近最大20件を返す。
 	ListVolumeHistory(ctx context.Context, beforeDate time.Time) ([]model.DailyVolume, error)
 }
 
 type DailyVolumeRatioCalculator struct {
-	repository DailyVolumeReader
+	reader DailyVolumeReader
 }
 
-func NewDailyVolumeRatioCalculator(repository DailyVolumeReader) *DailyVolumeRatioCalculator {
+func NewDailyVolumeRatioCalculator(reader DailyVolumeReader) *DailyVolumeRatioCalculator {
 	return &DailyVolumeRatioCalculator{
-		repository: repository,
+		reader: reader,
 	}
 }
 
@@ -29,11 +30,11 @@ func (calculate *DailyVolumeRatioCalculator) Calculate(
 	tradeDate time.Time,
 ) ([]model.DailyVolumeRatio, error) {
 
-	targetDateVolumes, err := calculate.repository.ListVolumesByTradeDate(ctx, tradeDate)
+	targetDateVolumes, err := calculate.reader.ListVolumesByTradeDate(ctx, tradeDate)
 	if err != nil {
 		return nil, fmt.Errorf("list volumes by tradeDate: %w", err)
 	}
-	volumeHistories, err := calculate.repository.ListVolumeHistory(ctx, tradeDate)
+	volumeHistories, err := calculate.reader.ListVolumeHistory(ctx, tradeDate)
 	if err != nil {
 		return nil, fmt.Errorf("list volume history by tradeDate: %w", err)
 	}
