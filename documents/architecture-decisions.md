@@ -92,7 +92,7 @@ Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。
 
 `openapi/openapi.yaml`を入口としてHTTP APIの仕様を管理する。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分割し、`$ref`で参照する。仕様が増えても機能ごとに編集できるようにし、モデル生成の方式は維持する。
 
-Redocly CLI 2.71.2で仕様を`openapi/dist/openapi.yaml`へ結合してから、`oapi-codegen v2.8.1`でGoモデル、`openapi-typescript 7.13.0`でTypeScriptの型を生成する。OpenAPI用のnpm依存は`openapi/package.json`と`package-lock.json`で管理し、フロントとは分ける。初回はプロジェクトルートで`npm --prefix openapi ci`、生成時は`./scripts/gen_openapi.sh`を実行する。Go側の設定は`apps/api/oapi-codegen.yaml`、生成先は`apps/api/openapi/models.gen.go`。TypeScriptの生成先は`apps/web/src/api/generated/schema.d.ts`。`--root-types --root-types-no-schema-prefix`でトップレベルの型エイリアスを生成し、利用側は生成した型名を直接importする。手書きの型エイリアスは設けない。中間の結合YAMLと`node_modules/`はGit管理しない。
+Redocly CLI 2.71.2で仕様を`openapi/dist/openapi.yaml`へ結合してから、`oapi-codegen v2.8.1`でGoモデル、`openapi-typescript 7.13.0`でTypeScriptの型を生成する。OpenAPI用のnpm依存は`openapi/package.json`と`package-lock.json`で管理し、フロントとは分ける。生成時はプロジェクトルートで`make generate-openapi`を実行し、依存のインストールもこのターゲットで行う。Go側の設定は`apps/api/oapi-codegen.yaml`、生成先は`apps/api/openapi/models.gen.go`。TypeScriptの生成先は`apps/web/src/api/generated/schema.d.ts`。`--root-types --root-types-no-schema-prefix`でトップレベルの型エイリアスを生成し、利用側は生成した型名を直接importする。手書きの型エイリアスは設けない。中間の結合YAMLと`node_modules/`はGit管理しない。
 
 モデル名は仕様全体で一意にし、共通モデルは参照で共有する。Redoclyは既定では同名で内容が異なるスキーマを警告付きで自動改名するが、本構成では`--component-renaming-conflicts-severity=error`を指定する。生成モデル名が意図せず変わることを避けるため、衝突時は結合を失敗させて定義側を修正する。同じYAMLマップ内のキーの重複はパースエラーとする。
 
@@ -132,6 +132,10 @@ CloudFrontは配信元の手前でキャッシュ・配信するCDN。今回は�
 家庭内での利用か外部公開か、ドメインやHTTPSの扱いは未決定。Caddyを採用しても、家庭内IPでのアクセスと公開ドメインでのアクセスでは証明書の扱いが異なる。
 
 ## 開発時の方針
+
+開発環境の起動はルートの`make`を入口とする。sqlc生成、OpenAPI用依存のインストールとモデル生成、Composeによるビルド・起動の順に実行する。生成処理はMakefileにまとめ、生成専用のシェルは置かない。個別の再生成は`make generate-sqlc`・`make generate-openapi`で行う。データの取り込みはこの起動処理に含めない。
+
+APIがDBの準備前に接続して終了することを避けるため、ComposeでMySQLのTCP応答をヘルスチェックし、成功後にAPIを起動する。
 
 ローカルで`npm run dev`によりViteの開発サーバーを使い、コード変更を画面に反映する。`npm run check`で型チェック、`npm run build`で本番用ファイルを生成する。本番はビルド済みファイルを配信する。Viteの`server.proxy`は`/api`を除いてホストのGo APIへ転送する。開発サーバーのコンテナ化は未対応。
 

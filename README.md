@@ -9,6 +9,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ## 必要な環境
 
 - Git
+- Make
 - Go 1.27.1
 - Node.js（フロント開発用。Viteの要件は20.19以上の20系、または22.12以上）
 - npm（OpenAPIの生成には10以上）
@@ -83,11 +84,10 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ├── scripts/
 │   ├── backfill_daily_prices.sh
 │   ├── deploy.sh
-│   ├── gen_openapi.sh
-│   ├── gen_sqlc.sh
 │   ├── import_daily_prices.sh
 │   └── import_stocks.sh
 ├── compose.yaml
+├── Makefile
 └── README.md
 ```
 
@@ -98,6 +98,18 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
 
 テストの範囲・命名・書き方は、[documents/testing-policy.md](documents/testing-policy.md)を参照してください。
+
+## 開発環境の起動
+
+Dockerを起動し、プロジェクトルートにDB設定を含む`.env`を用意して実行します。
+
+```bash
+make
+```
+
+sqlc生成、OpenAPI用依存のインストールとGo・TypeScriptモデル生成、Dockerイメージのビルドと`web`・`api`・`db`の起動を順に実行します。途中で失敗した場合は後続の処理を実行しません。Go・Node.js・npmはホスト側にも必要で、初回の依存取得にはネットワーク接続を使用します。
+
+起動後は`http://localhost:3000`で画面を確認できます。既存のDBデータは保持しますが、株価データのインポートは実行しません。停止は`docker compose stop`です。`make dev`も同じ処理を実行します。
 
 ## フロントエンドの開発
 
@@ -140,23 +152,19 @@ curl http://localhost:3000/api/ping
 
 `{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
 
-DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。`depends_on`は起動順を指定するもので、APIとDBの準備完了は待ちません。
+DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。APIはMySQLのヘルスチェック成功後に起動します。`web`はAPIの起動後に開始しますが、APIの準備完了までは待ちません。
 
 ## OpenAPIとGo・TypeScriptモデルの生成
 
 API仕様の入口は[openapi/openapi.yaml](openapi/openapi.yaml)です。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分け、`$ref`で参照します。Go APIへ直接接続する場合のパスを定義し、Caddy・Vite経由では先頭に`/api`を付けます。
 
-初回、またはOpenAPI用の依存関係を更新した場合は、プロジェクトルートでインストールします。フロントの依存関係とは分けて管理します。
-
-```bash
-npm --prefix openapi ci
-```
-
 `openapi/`内の仕様または`apps/api/oapi-codegen.yaml`を変更した場合は、プロジェクトルートで実行します。
 
 ```bash
-./scripts/gen_openapi.sh
+make generate-openapi
 ```
+
+OpenAPI用の依存を`npm --prefix openapi ci`でインストールしてから生成します。フロントの依存関係とは分けて管理します。
 
 Redocly CLI 2.71.2で分割した仕様を`openapi/dist/openapi.yaml`へ結合し、次のツールでモデルを生成します。
 
@@ -180,7 +188,7 @@ CIでの再生成差分チェックは、次の段階で追加します。
 `apps/database/mysql/init/table_schema.sql`または`apps/api/query/`内のSQLを変更した場合は、プロジェクトルートで次のコマンドを実行します。
 
 ```bash
-./scripts/gen_sqlc.sh
+make generate-sqlc
 ```
 
 生成された`apps/api/db/`内のGoファイルはGitで管理し、直接編集しません。
