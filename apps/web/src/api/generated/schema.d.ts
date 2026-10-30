@@ -50,6 +50,7 @@ export interface paths {
          * @description daily_pricesの最も新しい取引日を使用する。市場の最新営業日や取り込み完了を保証しない。
          *     比較元は銘柄ごとの対象日より前の直近の保存済み日足とし、必ずしも前営業日ではない。
          *     比較元がある全銘柄を返し、並べ替え・件数制限は行わない。
+         *     会社名は現在の銘柄マスターから取得し、マスター未登録の銘柄も会社名をnullとして返す。
          */
         get: operations["getLatestDailyPriceChanges"];
         put?: never;
@@ -123,6 +124,8 @@ export interface components {
         DailyPriceChangeResponse: {
             /** @description 銘柄コード。 */
             symbol: string;
+            /** @description 現在の銘柄マスターの会社名。マスター未登録ならnull。キーは常に返す。 */
+            company_name: string | null;
             trade_date: components["schemas"]["TradeDate"];
             close_price: components["schemas"]["DecimalString"];
             previous_trade_date: components["schemas"]["TradeDate"];

@@ -13,6 +13,9 @@ type DailyPriceChangeResponse struct {
 	// Example: 110.5
 	ClosePrice DecimalString `json:"close_price"`
 
+	// CompanyName 現在の銘柄マスターの会社名。マスター未登録ならnull。キーは常に返す。
+	CompanyName *string `json:"company_name"`
+
 	// PreviousClosePrice 精度を保持するため文字列で返す10進数。
 	//
 	// Example: 110.5
