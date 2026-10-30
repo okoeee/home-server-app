@@ -10,6 +10,7 @@
     <thead>
       <tr>
         <th scope="col">銘柄コード</th>
+        <th scope="col">会社名</th>
         <th scope="col">対象日</th>
         <th scope="col">終値（円）</th>
         <th scope="col">比較元の日付</th>
@@ -21,6 +22,7 @@
       {#each changes as change (change.symbol)}
         <tr>
           <td>{change.symbol}</td>
+          <td>{change.company_name ?? '名称未登録'}</td>
           <td>{change.trade_date}</td>
           <td class="number">{change.close_price}</td>
           <td>{change.previous_trade_date}</td>
