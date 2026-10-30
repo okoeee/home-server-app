@@ -88,6 +88,18 @@ Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。
 
 最新日の取得には`GetLatestDailyPriceTradeDate`を使う。Usecaseの公開メソッドは`CalculateLatest`だけとし、日付を受け取る計算処理は非公開の`calculate`に分ける。DBが空なら対象日は`null`で一覧は空配列とする。最新日に比較元のある銘柄がなくても、その日付を維持する。「最新」は取り込み完了や市場の最新営業日を保証しないため、対象日を明示する。
 
+## 日足のRepositoryと読み取り
+
+`domain/repository/DailyPriceRepository`は日足の保存を担い、現在は`Upsert`だけを定義する。分析用の取得操作は、利用側の`usecase/dailyprice`に定義した小さなReaderインターフェースで要求する。
+
+| 利用側 | インターフェース | 操作 |
+| --- | --- | --- |
+| `DailyPriceImporter` | `DailyPriceRepository` | 日足のUPSERT |
+| `DailyPriceChangeCalculator` | `DailyPriceComparisonReader` | 最新取引日と比較用データの取得 |
+| `DailyVolumeRatioCalculator` | `DailyVolumeReader` | 対象日の出来高と過去の出来高の取得 |
+
+`DailyPriceComparison`は日足の比較用モデルで、独立した集約として扱わない。MySQL側の具体的な`DailyPriceRepository`が保存と各Readerの操作を実装する。実装クラスは分けず、Usecaseとそのテストは必要な操作だけに依存する。別の分析クエリを追加しても、既存のReaderを変えなければ既存のstubへメソッドを追加する必要はない。
+
 ## OpenAPIとAPI用モデル
 
 `openapi/openapi.yaml`を入口としてHTTP APIの仕様を管理する。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分割し、`$ref`で参照する。仕様が増えても機能ごとに編集できるようにし、モデル生成の方式は維持する。
