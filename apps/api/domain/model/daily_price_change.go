@@ -8,6 +8,7 @@ import (
 
 type DailyPriceChange struct {
 	Symbol             string
+	CompanyName        *string
 	TradeDate          time.Time
 	ClosePrice         decimal.Decimal
 	PreviousTradeDate  time.Time

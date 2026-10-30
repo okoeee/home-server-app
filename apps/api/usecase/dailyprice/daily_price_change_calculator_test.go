@@ -30,9 +30,11 @@ func TestDailyPriceChangeCalculatorCalculate_MapsComparisonsToResults(t *testing
 	// Arrange
 	date := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
 	previousDate := date.AddDate(0, 0, -3)
+	companyName := "サンプル株式会社"
 	comparisons := []model.DailyPriceComparison{
 		{
 			Symbol: "12340", TradeDate: date, ClosePrice: decimal.NewFromInt(110),
+			CompanyName:       &companyName,
 			PreviousTradeDate: previousDate, PreviousClosePrice: decimal.NewFromInt(100),
 		},
 		{
@@ -57,6 +59,13 @@ func TestDailyPriceChangeCalculatorCalculate_MapsComparisonsToResults(t *testing
 	}
 	for index, result := range got {
 		input := comparisons[index]
+		if input.CompanyName == nil {
+			if result.CompanyName != nil {
+				t.Errorf("result[%d].CompanyName = %v, want nil", index, result.CompanyName)
+			}
+		} else if result.CompanyName == nil || *result.CompanyName != *input.CompanyName {
+			t.Errorf("result[%d].CompanyName = %v, want %s", index, result.CompanyName, *input.CompanyName)
+		}
 		if result.Symbol != input.Symbol || !result.TradeDate.Equal(input.TradeDate) ||
 			!result.ClosePrice.Equal(input.ClosePrice) || !result.PreviousTradeDate.Equal(input.PreviousTradeDate) ||
 			!result.PreviousClosePrice.Equal(input.PreviousClosePrice) || !result.ChangeRate.Equal(wantRates[index]) {

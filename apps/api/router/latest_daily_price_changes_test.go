@@ -13,11 +13,15 @@ import (
 
 func TestGetLatestDailyPriceChanges_Scenarios(t *testing.T) {
 	date := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
+	companyName := "サンプル株式会社"
 	changes := []model.DailyPriceChange{{
 		Symbol: "12340", TradeDate: date, ClosePrice: decimal.RequireFromString("110.5"),
+		CompanyName:       &companyName,
 		PreviousTradeDate: date.AddDate(0, 0, -3), PreviousClosePrice: decimal.NewFromInt(100),
 		ChangeRate: decimal.RequireFromString("10.5"),
 	}}
+	missingName := changes[0]
+	missingName.CompanyName = nil
 	tests := []struct {
 		name       string
 		result     model.LatestDailyPriceChanges
@@ -29,7 +33,13 @@ func TestGetLatestDailyPriceChanges_Scenarios(t *testing.T) {
 			name:       "Usecaseの対象日と結果をJSONで返す",
 			result:     model.LatestDailyPriceChanges{TradeDate: &date, Changes: changes},
 			wantStatus: http.StatusOK,
-			wantBody:   `{"trade_date":"2026-10-19","changes":[{"symbol":"12340","trade_date":"2026-10-19","close_price":"110.5","previous_trade_date":"2026-10-16","previous_close_price":"100.0","change_rate":"10.5"}]}`,
+			wantBody:   `{"trade_date":"2026-10-19","changes":[{"symbol":"12340","company_name":"サンプル株式会社","trade_date":"2026-10-19","close_price":"110.5","previous_trade_date":"2026-10-16","previous_close_price":"100.0","change_rate":"10.5"}]}`,
+		},
+		{
+			name:       "会社名がなくても銘柄を残しnullを返す",
+			result:     model.LatestDailyPriceChanges{TradeDate: &date, Changes: []model.DailyPriceChange{missingName}},
+			wantStatus: http.StatusOK,
+			wantBody:   `{"trade_date":"2026-10-19","changes":[{"symbol":"12340","company_name":null,"trade_date":"2026-10-19","close_price":"110.5","previous_trade_date":"2026-10-16","previous_close_price":"100.0","change_rate":"10.5"}]}`,
 		},
 		{
 			name:       "対象日なしはnullと空配列を返す",

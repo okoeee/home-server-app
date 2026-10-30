@@ -4,8 +4,8 @@ import { fetchLatestDailyPriceChanges } from '../src/api/daily-price-changes.ts'
 
 test('1回の通信で最新取引日と全件を取得する', async (t) => {
   const changes = [
-    { symbol: '12340', trade_date: '2026-10-19', close_price: '110.5', previous_trade_date: '2026-10-16', previous_close_price: '100.0', change_rate: '10.5' },
-    { symbol: '56780', trade_date: '2026-10-19', close_price: '90.0', previous_trade_date: '2026-10-15', previous_close_price: '100.0', change_rate: '-10' },
+    { symbol: '12340', company_name: 'サンプル株式会社', trade_date: '2026-10-19', close_price: '110.5', previous_trade_date: '2026-10-16', previous_close_price: '100.0', change_rate: '10.5' },
+    { symbol: '56780', company_name: null, trade_date: '2026-10-19', close_price: '90.0', previous_trade_date: '2026-10-15', previous_close_price: '100.0', change_rate: '-10' },
   ]
   const result = { trade_date: '2026-10-19', changes }
   const fetchMock = t.mock.method(globalThis, 'fetch', async (url) => {

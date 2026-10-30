@@ -241,6 +241,7 @@ curl 'http://localhost:3000/api/v1/daily-price-changes/latest'
   "changes": [
     {
       "symbol": "12340",
+      "company_name": "サンプル株式会社",
       "trade_date": "2026-10-19",
       "close_price": "110.5",
       "previous_trade_date": "2026-10-16",
@@ -252,6 +253,8 @@ curl 'http://localhost:3000/api/v1/daily-price-changes/latest'
 ```
 
 「最新」は`daily_prices`内の最も新しい取引日であり、今日や市場の最新営業日を保証するものではありません。API内部で対象日を決定し、その日の騰落率を返します。取り込みの遅れを確認できるよう、画面にも対象日を表示します。
+
+`company_name`は現在の銘柄マスターの会社名です。過去の社名変更履歴は使用しません。マスター未登録でも日足を結果に残し、`company_name: null`を返します。フロントでは会社名の列に「名称未登録」と表示します。
 
 DBが空なら`200`と`{"trade_date":null,"changes":[]}`を返します。最新日に比較可能な銘柄がなくても、過去日には戻さず、その日付と空配列を返します。取得・計算失敗は`500`です。
 

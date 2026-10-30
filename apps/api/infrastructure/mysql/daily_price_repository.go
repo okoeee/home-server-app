@@ -85,8 +85,14 @@ func (repository *DailyPriceRepository) ListByTradeDate(
 	dailyPriceComparisons := make([]model.DailyPriceComparison, 0, len(rows))
 
 	for _, row := range rows {
+		var companyName *string
+		if row.CompanyName.Valid {
+			name := row.CompanyName.String
+			companyName = &name
+		}
 		dailyPriceComparisons = append(dailyPriceComparisons, model.DailyPriceComparison{
 			Symbol:             row.Symbol,
+			CompanyName:        companyName,
 			TradeDate:          row.TradeDate,
 			ClosePrice:         row.ClosePrice,
 			PreviousTradeDate:  row.PreviousTradeDate,
