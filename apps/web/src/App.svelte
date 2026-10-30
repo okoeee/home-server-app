@@ -2,11 +2,11 @@
   import { onMount } from 'svelte'
   import { fetchLatestDailyPriceChanges } from './api/daily-price-changes'
   import DailyPriceChangeTable from './components/DailyPriceChangeTable.svelte'
-  import type { DailyPriceChange } from './models/daily-price-change'
+  import type { DailyPriceChangeResponse } from './api/generated/schema'
   import { selectTopDailyPriceChanges } from './models/daily-price-change'
 
   let date = $state<string | null>(null)
-  let changes = $state<DailyPriceChange[]>([])
+  let changes = $state<DailyPriceChangeResponse[]>([])
   let loading = $state(true)
   let error = $state('')
 

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { selectTopDailyPriceChanges } from '../src/models/daily-price-change.ts'
-import type { DailyPriceChange } from '../src/models/daily-price-change.ts'
+import type { DailyPriceChangeResponse } from '../src/api/generated/schema'
 
-function priceChange(symbol: string, rate: string): DailyPriceChange {
+function priceChange(symbol: string, rate: string): DailyPriceChangeResponse {
   return {
     symbol, change_rate: rate, trade_date: '2026-10-27',
     close_price: '100', previous_trade_date: '2026-10-26', previous_close_price: '100',
