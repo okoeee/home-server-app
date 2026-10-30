@@ -1,10 +1,14 @@
 DailyPriceChangeResponse:
   type: object
-  required: [symbol, trade_date, close_price, previous_trade_date, previous_close_price, change_rate]
+  required: [symbol, company_name, trade_date, close_price, previous_trade_date, previous_close_price, change_rate]
   properties:
     symbol:
       type: string
       description: 銘柄コード。
+    company_name:
+      type: string
+      nullable: true
+      description: 現在の銘柄マスターの会社名。マスター未登録ならnull。キーは常に返す。
     trade_date:
       $ref: './common.yaml#/TradeDate'
     close_price:
