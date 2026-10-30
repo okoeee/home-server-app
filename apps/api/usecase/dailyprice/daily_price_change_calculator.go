@@ -2,26 +2,25 @@ package dailyprice
 
 import (
 	"api/domain/model"
-	"api/domain/repository"
 	"context"
 	"fmt"
 	"time"
 )
 
 type DailyPriceChangeCalculator struct {
-	repository repository.DailyPriceComparisonRepository
+	reader DailyPriceComparisonReader
 }
 
 func NewDailyPriceChangeCalculator(
-	repository repository.DailyPriceComparisonRepository,
+	reader DailyPriceComparisonReader,
 ) *DailyPriceChangeCalculator {
 	return &DailyPriceChangeCalculator{
-		repository: repository,
+		reader: reader,
 	}
 }
 
 func (calculator *DailyPriceChangeCalculator) CalculateLatest(ctx context.Context) (model.LatestDailyPriceChanges, error) {
-	tradeDate, found, err := calculator.repository.GetLatestTradeDate(ctx)
+	tradeDate, found, err := calculator.reader.GetLatestTradeDate(ctx)
 	if err != nil {
 		return model.LatestDailyPriceChanges{}, fmt.Errorf("get latest trade date: %w", err)
 	}
@@ -40,7 +39,7 @@ func (calculator *DailyPriceChangeCalculator) calculate(
 	tradeDate time.Time,
 ) ([]model.DailyPriceChange, error) {
 
-	comparisons, err := calculator.repository.ListByTradeDate(ctx, tradeDate)
+	comparisons, err := calculator.reader.ListByTradeDate(ctx, tradeDate)
 	if err != nil {
 		return nil, fmt.Errorf("daily price change calculator: %w", err)
 	}

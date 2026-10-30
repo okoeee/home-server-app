@@ -10,7 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type priceComparisonRepositoryStub struct {
+type priceComparisonReaderStub struct {
 	latestDate  time.Time
 	latestFound bool
 	latestErr   error
@@ -18,11 +18,11 @@ type priceComparisonRepositoryStub struct {
 	listErr     error
 }
 
-func (stub priceComparisonRepositoryStub) GetLatestTradeDate(context.Context) (time.Time, bool, error) {
+func (stub priceComparisonReaderStub) GetLatestTradeDate(context.Context) (time.Time, bool, error) {
 	return stub.latestDate, stub.latestFound, stub.latestErr
 }
 
-func (stub priceComparisonRepositoryStub) ListByTradeDate(_ context.Context, date time.Time) ([]model.DailyPriceComparison, error) {
+func (stub priceComparisonReaderStub) ListByTradeDate(_ context.Context, date time.Time) ([]model.DailyPriceComparison, error) {
 	return stub.comparisons[date], stub.listErr
 }
 
@@ -40,7 +40,7 @@ func TestDailyPriceChangeCalculatorCalculate_MapsComparisonsToResults(t *testing
 			PreviousTradeDate: previousDate.AddDate(0, 0, -1), PreviousClosePrice: decimal.NewFromInt(200),
 		},
 	}
-	calculator := NewDailyPriceChangeCalculator(priceComparisonRepositoryStub{
+	calculator := NewDailyPriceChangeCalculator(priceComparisonReaderStub{
 		comparisons: map[time.Time][]model.DailyPriceComparison{date: comparisons},
 	})
 	wantRates := []decimal.Decimal{decimal.NewFromInt(10), decimal.NewFromInt(-5)}
@@ -68,7 +68,7 @@ func TestDailyPriceChangeCalculatorCalculate_MapsComparisonsToResults(t *testing
 func TestDailyPriceChangeCalculatorCalculate_NoComparisonsReturnsEmptyResults(t *testing.T) {
 	// Arrange
 	date := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
-	calculator := NewDailyPriceChangeCalculator(priceComparisonRepositoryStub{})
+	calculator := NewDailyPriceChangeCalculator(priceComparisonReaderStub{})
 
 	// Act
 	got, err := calculator.calculate(context.Background(), date)
@@ -87,17 +87,17 @@ func TestDailyPriceChangeCalculatorCalculate_ErrorsReturnNoPartialResults(t *tes
 	readErr := errors.New("read failed")
 	tests := []struct {
 		name       string
-		repository priceComparisonRepositoryStub
+		repository priceComparisonReaderStub
 		wantCause  error
 	}{
 		{
 			name:       "取得エラーを伝播する",
-			repository: priceComparisonRepositoryStub{listErr: readErr},
+			repository: priceComparisonReaderStub{listErr: readErr},
 			wantCause:  readErr,
 		},
 		{
 			name: "途中で計算に失敗しても一部の結果を返さない",
-			repository: priceComparisonRepositoryStub{
+			repository: priceComparisonReaderStub{
 				comparisons: map[time.Time][]model.DailyPriceComparison{
 					date: {
 						{Symbol: "12340", TradeDate: date, ClosePrice: decimal.NewFromInt(110), PreviousClosePrice: decimal.NewFromInt(100)},
@@ -133,7 +133,7 @@ func TestCalculateLatest_UsesLatestStoredDate(t *testing.T) {
 	// Arrange
 	date := time.Date(2026, 10, 19, 0, 0, 0, 0, time.UTC)
 	previousDate := date.AddDate(0, 0, -3)
-	calculator := NewDailyPriceChangeCalculator(priceComparisonRepositoryStub{
+	calculator := NewDailyPriceChangeCalculator(priceComparisonReaderStub{
 		latestDate: date, latestFound: true,
 		comparisons: map[time.Time][]model.DailyPriceComparison{
 			date:         {{Symbol: "12340", TradeDate: date, ClosePrice: decimal.NewFromInt(110), PreviousTradeDate: previousDate, PreviousClosePrice: decimal.NewFromInt(100)}},
@@ -171,7 +171,7 @@ func TestCalculateLatest_EmptyResults(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// Arrange
-			calculator := NewDailyPriceChangeCalculator(priceComparisonRepositoryStub{latestDate: date, latestFound: test.found})
+			calculator := NewDailyPriceChangeCalculator(priceComparisonReaderStub{latestDate: date, latestFound: test.found})
 
 			// Act
 			got, err := calculator.CalculateLatest(context.Background())
@@ -194,14 +194,14 @@ func TestCalculateLatest_EmptyResults(t *testing.T) {
 	}
 }
 
-func TestCalculateLatest_PropagatesRepositoryErrors(t *testing.T) {
+func TestCalculateLatest_PropagatesReaderErrors(t *testing.T) {
 	readErr := errors.New("read failed")
 	tests := []struct {
 		name       string
-		repository priceComparisonRepositoryStub
+		repository priceComparisonReaderStub
 	}{
-		{name: "最新日の取得エラー", repository: priceComparisonRepositoryStub{latestErr: readErr}},
-		{name: "日足の取得エラー", repository: priceComparisonRepositoryStub{latestFound: true, listErr: readErr}},
+		{name: "最新日の取得エラー", repository: priceComparisonReaderStub{latestErr: readErr}},
+		{name: "日足の取得エラー", repository: priceComparisonReaderStub{latestFound: true, listErr: readErr}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
