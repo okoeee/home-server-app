@@ -1,0 +1,10 @@
+get:
+  operationId: getPing
+  summary: 稼働確認
+  responses:
+    '200':
+      description: APIが応答可能。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/PingResponse'

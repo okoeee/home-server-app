@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { DailyPriceChange } from '../models/daily-price-change'
+  import type { DailyPriceChangeResponse } from '../api/generated/schema'
 
-  let { changes }: { changes: DailyPriceChange[] } = $props()
+  let { changes }: { changes: DailyPriceChangeResponse[] } = $props()
 </script>
 
 <div class="table-container">

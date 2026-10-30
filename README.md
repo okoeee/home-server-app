@@ -9,9 +9,10 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ## 必要な環境
 
 - Git
+- Make
 - Go 1.27.1
 - Node.js（フロント開発用。Viteの要件は20.19以上の20系、または22.12以上）
-- npm
+- npm（OpenAPIの生成には10以上）
 - Docker
 - Docker Compose
 
@@ -21,7 +22,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 .
 ├── .github/
 │   └── workflows/
-│       └── api-ci.yaml
+│       └── api-test.yaml
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile
@@ -45,6 +46,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   │   ├── daily_prices.sql
 │   │   │   └── stocks.sql
 │   │   ├── main.go
+│   │   ├── oapi-codegen.yaml
+│   │   ├── openapi/
+│   │   │   └── models.gen.go
 │   │   ├── router/
 │   │   ├── sqlc.yaml
 │   │   └── usecase/
@@ -63,19 +67,27 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │       ├── package-lock.json
 │       ├── public/
 │       ├── src/
+│       │   └── api/generated/schema.d.ts
 │       └── vite.config.ts
 ├── documents/
 │   ├── architecture-decisions.md
 │   ├── naming-conventions.md
 │   ├── stock-price-design.md
 │   └── testing-policy.md
+├── openapi/
+│   ├── openapi.yaml
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── paths/
+│   ├── responses/
+│   └── schemas/
 ├── scripts/
 │   ├── backfill_daily_prices.sh
 │   ├── deploy.sh
-│   ├── gen_sqlc.sh
 │   ├── import_daily_prices.sh
 │   └── import_stocks.sh
 ├── compose.yaml
+├── Makefile
 └── README.md
 ```
 
@@ -86,6 +98,18 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
 
 テストの範囲・命名・書き方は、[documents/testing-policy.md](documents/testing-policy.md)を参照してください。
+
+## 開発環境の起動
+
+Dockerを起動し、プロジェクトルートにDB設定を含む`.env`を用意して実行します。
+
+```bash
+make
+```
+
+sqlc生成、OpenAPI用依存のインストールとGo・TypeScriptモデル生成、Dockerイメージのビルドと`web`・`api`・`db`の起動を順に実行します。途中で失敗した場合は後続の処理を実行しません。Go・Node.js・npmはホスト側にも必要で、初回の依存取得にはネットワーク接続を使用します。
+
+起動後は`http://localhost:3000`で画面を確認できます。既存のDBデータは保持しますが、株価データのインポートは実行しません。停止は`docker compose stop`です。`make dev`も同じ処理を実行します。
 
 ## フロントエンドの開発
 
@@ -128,14 +152,43 @@ curl http://localhost:3000/api/ping
 
 `{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
 
-DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。`depends_on`は起動順を指定するもので、APIとDBの準備完了は待ちません。
+DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。APIはMySQLのヘルスチェック成功後に起動します。`web`はAPIの起動後に開始しますが、APIの準備完了までは待ちません。
+
+## OpenAPIとGo・TypeScriptモデルの生成
+
+API仕様の入口は[openapi/openapi.yaml](openapi/openapi.yaml)です。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分け、`$ref`で参照します。Go APIへ直接接続する場合のパスを定義し、Caddy・Vite経由では先頭に`/api`を付けます。
+
+`openapi/`内の仕様または`apps/api/oapi-codegen.yaml`を変更した場合は、プロジェクトルートで実行します。
+
+```bash
+make generate-openapi
+```
+
+OpenAPI用の依存を`npm --prefix openapi ci`でインストールしてから生成します。フロントの依存関係とは分けて管理します。
+
+Redocly CLI 2.71.2で分割した仕様を`openapi/dist/openapi.yaml`へ結合し、次のツールでモデルを生成します。
+
+| 対象 | ツール | 生成先 |
+| --- | --- | --- |
+| Go | `oapi-codegen v2.8.1`（`go run`） | `apps/api/openapi/models.gen.go` |
+| TypeScript | `openapi-typescript 7.13.0` | `apps/web/src/api/generated/schema.d.ts` |
+
+ツールの取得・バージョン解決にネットワーク接続を使用します。生成ファイルはGit管理し、直接編集しません。結合結果の`openapi/dist/`と依存関係の`openapi/node_modules/`はGit管理しません。仕様・設定・ロックファイル・生成コード・利用側の変更は同じPRに含めます。
+
+TypeScriptは`--root-types --root-types-no-schema-prefix`を指定し、`DailyPriceChangeResponse`などをトップレベルの型エイリアスとして生成します。利用側は`src/api/generated/schema.d.ts`から直接importし、手書きの型エイリアスは設けません。表示用の上位10件の選択処理は引き続き`src/models/daily-price-change.ts`で管理します。
+
+モデル名は仕様全体で一意にし、共通モデルは参照で再利用します。同名で内容が異なるスキーマを結合するときは、`--component-renaming-conflicts-severity=error`により自動改名せず失敗させます。同じYAMLマップ内のキーの重複もパースエラーになります。
+
+生成するのはAPI用モデルだけです。Handler・ルート・通信処理・入力検証は手書きのままにし、Domainやsqlcのモデルとは分けます。日付・数値は既存のJSON表現に合わせて文字列で扱います。最新取引日の`null`と一覧の空配列も維持します。モデル生成だけで実行時の入力・レスポンス検証が追加されるわけではありません。
+
+CIでの再生成差分チェックは、次の段階で追加します。
 
 ## sqlc
 
 `apps/database/mysql/init/table_schema.sql`または`apps/api/query/`内のSQLを変更した場合は、プロジェクトルートで次のコマンドを実行します。
 
 ```bash
-./scripts/gen_sqlc.sh
+make generate-sqlc
 ```
 
 生成された`apps/api/db/`内のGoファイルはGitで管理し、直接編集しません。

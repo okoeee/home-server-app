@@ -394,7 +394,7 @@ ALTER TABLE daily_prices
 スキーマまたはクエリを変更した後は、sqlcのコードも再生成する。
 
 ```bash
-./scripts/gen_sqlc.sh
+make generate-sqlc
 ```
 
 生成コード、スキーマ変更、クエリ変更は同じコミットに含める。

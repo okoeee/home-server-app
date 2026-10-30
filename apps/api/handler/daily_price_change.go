@@ -2,26 +2,13 @@ package handler
 
 import (
 	"api/domain/model"
+	"api/openapi"
 	"context"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
-type dailyPriceChangeResponse struct {
-	Symbol             string `json:"symbol"`
-	TradeDate          string `json:"trade_date"`
-	ClosePrice         string `json:"close_price"`
-	PreviousTradeDate  string `json:"previous_trade_date"`
-	PreviousClosePrice string `json:"previous_close_price"`
-	ChangeRate         string `json:"change_rate"`
-}
-
-type latestDailyPriceChangesResponse struct {
-	TradeDate *string                    `json:"trade_date"`
-	Changes   []dailyPriceChangeResponse `json:"changes"`
-}
 
 type DailyPriceChangeCalculator interface {
 	CalculateLatest(context.Context) (model.LatestDailyPriceChanges, error)
@@ -38,7 +25,7 @@ func NewDailyPriceChangeHandler(calculator DailyPriceChangeCalculator) *DailyPri
 func (handler *DailyPriceChangeHandler) GetLatestDailyPriceChanges(c *gin.Context) {
 	result, err := handler.calculator.CalculateLatest(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to calculate latest daily price changes"})
+		c.JSON(http.StatusInternalServerError, openapi.ErrorResponse{Message: "failed to calculate latest daily price changes"})
 		return
 	}
 	var tradeDate *string
@@ -46,16 +33,16 @@ func (handler *DailyPriceChangeHandler) GetLatestDailyPriceChanges(c *gin.Contex
 		formatted := result.TradeDate.Format(time.DateOnly)
 		tradeDate = &formatted
 	}
-	c.JSON(http.StatusOK, latestDailyPriceChangesResponse{
+	c.JSON(http.StatusOK, openapi.LatestDailyPriceChangesResponse{
 		TradeDate: tradeDate,
 		Changes:   toDailyPriceChangeResponses(result.Changes),
 	})
 }
 
-func toDailyPriceChangeResponses(changes []model.DailyPriceChange) []dailyPriceChangeResponse {
-	responses := make([]dailyPriceChangeResponse, 0, len(changes))
+func toDailyPriceChangeResponses(changes []model.DailyPriceChange) []openapi.DailyPriceChangeResponse {
+	responses := make([]openapi.DailyPriceChangeResponse, 0, len(changes))
 	for _, change := range changes {
-		responses = append(responses, dailyPriceChangeResponse{
+		responses = append(responses, openapi.DailyPriceChangeResponse{
 			Symbol:             change.Symbol,
 			TradeDate:          change.TradeDate.Format(time.DateOnly),
 			ClosePrice:         change.ClosePrice.StringFixed(1),

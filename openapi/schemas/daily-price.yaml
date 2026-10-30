@@ -1,0 +1,29 @@
+DailyPriceResponse:
+  type: object
+  required: [symbol, trade_date, open_price, high_price, low_price, close_price, volume]
+  properties:
+    symbol:
+      type: string
+      description: 銘柄コード。
+    trade_date:
+      $ref: './common.yaml#/TradeDate'
+    open_price:
+      description: 調整済み始値（円）。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'
+    high_price:
+      description: 調整済み高値（円）。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'
+    low_price:
+      description: 調整済み安値（円）。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'
+    close_price:
+      description: 調整済み終値（円）。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'
+    volume:
+      description: 調整済み出来高。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'

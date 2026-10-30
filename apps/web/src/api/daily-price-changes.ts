@@ -1,6 +1,6 @@
-import type { LatestDailyPriceChanges } from '../models/daily-price-change'
+import type { LatestDailyPriceChangesResponse } from './generated/schema'
 
-export async function fetchLatestDailyPriceChanges(): Promise<LatestDailyPriceChanges> {
+export async function fetchLatestDailyPriceChanges(): Promise<LatestDailyPriceChangesResponse> {
   const response = await fetch('/api/v1/daily-price-changes/latest')
 
   if (!response.ok) {

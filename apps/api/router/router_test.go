@@ -15,10 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type stockQuerierStub struct{}
+type stockQuerierStub struct {
+	pricesBySymbol map[string][]db.DailyPrice
+	err            error
+}
 
-func (stockQuerierStub) ListDailyPricesBySymbol(context.Context, string) ([]db.DailyPrice, error) {
-	return nil, nil
+func (stub stockQuerierStub) ListDailyPricesBySymbol(_ context.Context, symbol string) ([]db.DailyPrice, error) {
+	return stub.pricesBySymbol[symbol], stub.err
 }
 
 type priceChangeCalculatorStub struct {

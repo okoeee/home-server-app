@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: Home Server API
+  version: 1.0.0
+  description: 自宅サーバーに保存した株価と分析結果を取得するAPI。
+servers:
+  - url: http://localhost:8080
+    description: Go APIへの直接接続
+  - url: http://localhost:3000/api
+    description: Caddy経由
+paths:
+  /ping:
+    $ref: ./paths/ping.yaml
+  /v1/stocks/{symbol}/prices:
+    $ref: ./paths/stock-prices.yaml
+  /v1/daily-price-changes/latest:
+    $ref: ./paths/latest-price-changes.yaml
+  /v1/daily-volume-ratios:
+    $ref: ./paths/daily-volume-ratios.yaml
+components:
+  responses:
+    InternalServerError:
+      $ref: ./responses/common.yaml#/InternalServerError
+  schemas:
+    TradeDate:
+      $ref: ./schemas/common.yaml#/TradeDate
+    DecimalString:
+      $ref: ./schemas/common.yaml#/DecimalString
+    PingResponse:
+      $ref: ./schemas/common.yaml#/PingResponse
+    ErrorResponse:
+      $ref: ./schemas/common.yaml#/ErrorResponse
+    DailyPriceResponse:
+      $ref: ./schemas/daily-price.yaml#/DailyPriceResponse
+    DailyPriceChangeResponse:
+      $ref: ./schemas/daily-price-change.yaml#/DailyPriceChangeResponse
+    LatestDailyPriceChangesResponse:
+      $ref: ./schemas/daily-price-change.yaml#/LatestDailyPriceChangesResponse
+    DailyVolumeRatioResponse:
+      $ref: ./schemas/daily-volume-ratio.yaml#/DailyVolumeRatioResponse

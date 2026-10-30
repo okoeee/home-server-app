@@ -2,21 +2,12 @@ package handler
 
 import (
 	"api/db"
+	"api/openapi"
 	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
-
-type dailyPriceResponse struct {
-	Symbol     string `json:"symbol"`
-	TradeDate  string `json:"trade_date"`
-	OpenPrice  string `json:"open_price"`
-	HighPrice  string `json:"high_price"`
-	LowPrice   string `json:"low_price"`
-	ClosePrice string `json:"close_price"`
-	Volume     string `json:"volume"`
-}
 
 type StockQuerier interface {
 	ListDailyPricesBySymbol(
@@ -45,17 +36,17 @@ func (handler *StockHandler) GetDailyPrices(c *gin.Context) {
 	if err != nil {
 		c.JSON(
 			http.StatusInternalServerError,
-			gin.H{
-				"message": "failed to get daily prices",
+			openapi.ErrorResponse{
+				Message: "failed to get daily prices",
 			})
 
 		return
 	}
 
-	responses := make([]dailyPriceResponse, 0, len(prices))
+	responses := make([]openapi.DailyPriceResponse, 0, len(prices))
 
 	for _, price := range prices {
-		response := dailyPriceResponse{
+		response := openapi.DailyPriceResponse{
 			Symbol:     price.Symbol,
 			TradeDate:  price.TradeDate.Format("2006-01-02"),
 			OpenPrice:  price.OpenPrice.StringFixed(1),

@@ -1,0 +1,34 @@
+DailyPriceChangeResponse:
+  type: object
+  required: [symbol, trade_date, close_price, previous_trade_date, previous_close_price, change_rate]
+  properties:
+    symbol:
+      type: string
+      description: 銘柄コード。
+    trade_date:
+      $ref: './common.yaml#/TradeDate'
+    close_price:
+      $ref: './common.yaml#/DecimalString'
+    previous_trade_date:
+      $ref: './common.yaml#/TradeDate'
+    previous_close_price:
+      $ref: './common.yaml#/DecimalString'
+    change_rate:
+      description: 騰落率の百分率（10.5は10.5%上昇）。
+      allOf:
+        - $ref: './common.yaml#/DecimalString'
+LatestDailyPriceChangesResponse:
+  type: object
+  required: [trade_date, changes]
+  properties:
+    trade_date:
+      type: string
+      format: date
+      nullable: true
+      x-go-type: string
+      description: 最新の保存済み取引日。DBが空ならnull。キーは常に返す。
+      example: '2026-10-19'
+    changes:
+      type: array
+      items:
+        $ref: '#/DailyPriceChangeResponse'
