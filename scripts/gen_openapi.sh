@@ -3,6 +3,7 @@
 set -eu
 
 npm --prefix openapi run bundle
+npm --prefix openapi run generate:typescript
 
 cd apps/api
 mkdir -p openapi

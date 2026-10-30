@@ -2,9 +2,11 @@
   "name": "home-server-openapi",
   "private": true,
   "scripts": {
-    "bundle": "redocly bundle openapi.yaml --output dist/openapi.yaml --component-renaming-conflicts-severity=error"
+    "bundle": "redocly bundle openapi.yaml --output dist/openapi.yaml --component-renaming-conflicts-severity=error",
+    "generate:typescript": "openapi-typescript dist/openapi.yaml --output ../apps/web/src/api/generated/schema.d.ts"
   },
   "devDependencies": {
-    "@redocly/cli": "2.71.2"
+    "@redocly/cli": "2.71.2",
+    "openapi-typescript": "7.13.0"
   }
 }
