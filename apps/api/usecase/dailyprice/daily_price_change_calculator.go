@@ -56,6 +56,7 @@ func (calculator *DailyPriceChangeCalculator) calculate(
 
 		results = append(results, model.DailyPriceChange{
 			Symbol:             comparison.Symbol,
+			CompanyName:        comparison.CompanyName,
 			TradeDate:          comparison.TradeDate,
 			ClosePrice:         comparison.ClosePrice,
 			PreviousTradeDate:  comparison.PreviousTradeDate,

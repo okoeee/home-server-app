@@ -15,6 +15,7 @@ ORDER BY trade_date;
 -- name: ListDailyPricesWithPreviousClose :many
 SELECT
     current_price.symbol,
+    stocks.company_name,
     current_price.trade_date,
     current_price.close_price,
     previous_price.trade_date AS previous_trade_date,
@@ -28,6 +29,7 @@ FROM daily_prices as current_price
                             WHERE candidate.symbol = current_price.symbol
                               AND candidate.trade_date < current_price.trade_date
                         )
+         LEFT JOIN stocks ON stocks.symbol = current_price.symbol
 WHERE current_price.trade_date = ?;
 
 -- name: GetLatestDailyPriceTradeDate :one

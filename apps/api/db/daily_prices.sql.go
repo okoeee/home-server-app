@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -74,6 +75,7 @@ func (q *Queries) ListDailyPricesBySymbol(ctx context.Context, symbol string) ([
 const listDailyPricesWithPreviousClose = `-- name: ListDailyPricesWithPreviousClose :many
 SELECT
     current_price.symbol,
+    stocks.company_name,
     current_price.trade_date,
     current_price.close_price,
     previous_price.trade_date AS previous_trade_date,
@@ -87,11 +89,13 @@ FROM daily_prices as current_price
                             WHERE candidate.symbol = current_price.symbol
                               AND candidate.trade_date < current_price.trade_date
                         )
+         LEFT JOIN stocks ON stocks.symbol = current_price.symbol
 WHERE current_price.trade_date = ?
 `
 
 type ListDailyPricesWithPreviousCloseRow struct {
 	Symbol             string
+	CompanyName        sql.NullString
 	TradeDate          time.Time
 	ClosePrice         decimal.Decimal
 	PreviousTradeDate  time.Time
@@ -109,6 +113,7 @@ func (q *Queries) ListDailyPricesWithPreviousClose(ctx context.Context, tradeDat
 		var i ListDailyPricesWithPreviousCloseRow
 		if err := rows.Scan(
 			&i.Symbol,
+			&i.CompanyName,
 			&i.TradeDate,
 			&i.ClosePrice,
 			&i.PreviousTradeDate,

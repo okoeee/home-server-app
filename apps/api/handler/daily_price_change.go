@@ -44,6 +44,7 @@ func toDailyPriceChangeResponses(changes []model.DailyPriceChange) []openapi.Dai
 	for _, change := range changes {
 		responses = append(responses, openapi.DailyPriceChangeResponse{
 			Symbol:             change.Symbol,
+			CompanyName:        change.CompanyName,
 			TradeDate:          change.TradeDate.Format(time.DateOnly),
 			ClosePrice:         change.ClosePrice.StringFixed(1),
 			PreviousTradeDate:  change.PreviousTradeDate.Format(time.DateOnly),
