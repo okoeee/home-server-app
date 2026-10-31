@@ -153,7 +153,20 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 エラーのJSON形式は既存APIと同じ`{"message":"天気予報を取得できませんでした"}`とする。外部APIのレスポンスや内部エラーの詳細はそのまま公開しない。期限切れのキャッシュや空配列を成功レスポンスの代わりに返さない。
 
-この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。現時点では仕様とモデルのみを追加し、Handler・ルート・外部API取得・キャッシュ・画面は未実装。
+この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。現時点では仕様・モデルと外部API取得クライアントを追加済み。アプリ内モデルへの変換・整合性検証・Handler・ルート・キャッシュ・画面は未実装。
+
+## Open-Meteo取得クライアント
+
+`apps/api/external/openmeteo/fetch`の`NewClient()`でクライアントを作り、`FetchForecast(ctx)`で外部API用の`model.Forecast`を取得する。起動処理やHandlerへの接続は後続で行う。
+
+- 取得先：`https://api.open-meteo.com/v1/forecast`。認証不要。
+- 固定パラメーター：東京都庁の緯度・経度、`timezone=Asia/Tokyo`、`forecast_days=5`、`temperature_unit=celsius`。
+- 日別項目：`weather_code`、`temperature_2m_max`、`temperature_2m_min`、`relative_humidity_2m_mean`。
+- HTTPクライアントのタイムアウトは10秒。呼び出し元のContextによるキャンセルも受け付ける。
+- 通信失敗・200以外のHTTPステータス・JSONの解析失敗はエラーとして返す。レスポンス本文は利用後にCloseする。
+- 外部レスポンスの並列配列とnullをそのまま保持する。天気コード変換・日付や配列の整合性検証は次の変換処理で行う。
+- `Forecast.Daily`は値型とする。`daily`自体の欠損と空オブジェクトは区別せず、後続の配列の整合性検証で不足を検出する。配列内の気温・湿度・天気コードはnullと0を区別するためポインターを使う。
+- テストは外部APIへ接続せず、HTTP Transportを差し替えて正常系（リクエスト内容・数値・欠損値）、HTTPエラー、JSON解析エラーの3ケースに絞り、各ケースでCloseも確認する。
 
 ## 参考資料（2026-10-31確認）
 

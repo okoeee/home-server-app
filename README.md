@@ -36,7 +36,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   │   ├── model/
 │   │   │   └── repository/
 │   │   ├── external/
-│   │   │   └── jquants/
+│   │   │   ├── jquants/
+│   │   │   └── openmeteo/
 │   │   ├── go.mod
 │   │   ├── go.sum
 │   │   ├── handler/
@@ -99,7 +100,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 天気APIの選定理由とキャッシュの設計は、[documents/weather-design.md](documents/weather-design.md)を参照してください。
 
-天気APIの`GET /v1/weather/forecast`はOpenAPI仕様とGo・TypeScriptモデルの定義のみで、エンドポイントと画面は未実装です。
+天気APIはOpenAPI仕様・Go／TypeScriptモデルとOpen-Meteo取得クライアントを追加済みです。`GET /v1/weather/forecast`のエンドポイントと画面は未実装です。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
