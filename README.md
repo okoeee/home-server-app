@@ -71,6 +71,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │       └── vite.config.ts
 ├── documents/
 │   ├── architecture-decisions.md
+│   ├── home-dashboard.md
 │   ├── naming-conventions.md
 │   ├── stock-price-design.md
 │   └── testing-policy.md
@@ -92,6 +93,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ```
 
 株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
+
+ホームに表示したい情報と配置案は、[documents/home-dashboard.md](documents/home-dashboard.md)を参照してください。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
