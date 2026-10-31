@@ -74,7 +74,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── home-dashboard.md
 │   ├── naming-conventions.md
 │   ├── stock-price-design.md
-│   └── testing-policy.md
+│   ├── testing-policy.md
+│   └── weather-design.md
 ├── openapi/
 │   ├── openapi.yaml
 │   ├── package.json
@@ -95,6 +96,10 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
 
 ホームに表示したい情報と配置案は、[documents/home-dashboard.md](documents/home-dashboard.md)を参照してください。
+
+天気APIの選定理由とキャッシュの設計は、[documents/weather-design.md](documents/weather-design.md)を参照してください。
+
+天気APIの`GET /v1/weather/forecast`はOpenAPI仕様とGo・TypeScriptモデルの定義のみで、エンドポイントと画面は未実装です。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
