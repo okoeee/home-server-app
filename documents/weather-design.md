@@ -2,7 +2,7 @@
 
 ## 目的と範囲
 
-東京都の1地点について、今日を含む今後5日間の予報をホームに表示する。予報の取得APIは実装済みで、ホームでの表示は未実装。
+東京都の1地点について、今日を含む今後5日間の予報をホームに表示する。予報の取得APIと天気カードは実装済み。アイコン・UIキットは別途検討する。
 
 - 日別5日分：天気・最高／最低気温（℃）・平均相対湿度（%）。
 - 日付の区切りは`Asia/Tokyo`にそろえる。
@@ -163,7 +163,17 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 エラーのJSON形式は既存APIと同じ`{"message":"天気予報を取得できませんでした"}`とする。外部APIのレスポンスや内部エラーの詳細はそのまま公開しない。期限切れのキャッシュや空配列を成功レスポンスの代わりに返さない。
 
-この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。取得・変換・検証・キャッシュをHandlerとルートに接続済み。画面は未実装。
+この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。取得・変換・検証・キャッシュをHandlerとルートに接続し、ホームの天気カードから呼び出す。
+
+## フロントの表示
+
+- `src/api/weather-forecast.ts`で`/api/v1/weather/forecast`を呼び出し、生成済みの`WeatherForecastResponse`を利用する。
+- `src/models/weather-forecast.ts`で16種類の天気enumと日本語表示名を対応付ける。
+- `src/components/WeatherForecastCard.svelte`は取得結果と読み込み・エラー状態を受け取り、5日分を表示する。画面幅に合わせて日別のカードを折り返す。
+- `App.svelte`のマウント時に1回取得する。取得結果は画面の表示用に保持し、共有ストアやブラウザ側キャッシュは追加しない。
+- 天気と騰落率を独立して取得し、片方の失敗で他方の表示を妨げない。
+- 天気の対象日はそのまま表示し、取得日時だけを日本時間に整形する。気温・湿度のnullは「—」、0は数値として表示する。
+- 読み込み中・取得失敗・データなしを区別し、Open-Meteoへの出典リンクを表示する。アイコンは後続のPRで扱う。
 
 ## Open-Meteo取得クライアント
 

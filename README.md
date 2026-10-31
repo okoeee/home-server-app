@@ -4,7 +4,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 現在は、GoとGinで実装したAPIをDocker Composeで起動できます。
 
-フロントエンドはSvelte・TypeScript・Viteで実装し、ローカルの開発サーバーまたはComposeの`web`サービスで騰落率を表示できます。
+フロントエンドはSvelte・TypeScript・Viteで実装し、ローカルの開発サーバーまたはComposeの`web`サービスで天気予報と騰落率を表示できます。
 
 ## 必要な環境
 
@@ -100,7 +100,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 天気APIの選定理由とキャッシュの設計は、[documents/weather-design.md](documents/weather-design.md)を参照してください。
 
-天気APIは`GET /v1/weather/forecast`で東京都の5日予報を取得できます。天気の画面は未実装です。
+天気APIは`GET /v1/weather/forecast`で東京都の5日予報を取得し、ホームの天気カードに表示します。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
@@ -140,6 +140,8 @@ npm run dev
 npm run check
 npm run build
 ```
+
+ホームでは天気APIも1回呼び出し、東京都の5日分の天気・最高／最低気温・平均湿度と取得日時を表示します。天気名はenumから日本語へ変換し、欠損値は「—」と表示します。日付はAPIの暦日をそのまま使い、取得日時は日本時間で表示します。天気と騰落率の読み込み・エラー状態は独立しています。アイコン・UIキットは未導入です。
 
 API通信のテストは`apps/web`で`npm test`を実行します。テストにはNode.js 22.12以上が必要です。
 
@@ -233,6 +235,8 @@ MySQLコンテナを起動し、`.env`にJ-QuantsのAPIキーとDB設定を用�
 開始日と終了日は`YYYY-MM-DD`形式で入力します。指定期間内の営業日ごとにJ-Quantsから株価日足を取得し、`daily_prices`へUPSERTします。保存処理は1営業日単位のトランザクションで実行し、日付と保存件数をログへ出力します。同じ期間の再実行も可能です。
 
 ## 天気予報の取得API
+
+APIのコードを変更した場合は、`docker compose up -d --build api`で再ビルド・起動して変更を反映します。
 
 起動したAPIに対して、Caddy経由で次を実行します。Go APIへの直接接続は`http://localhost:8080/v1/weather/forecast`です。
 
