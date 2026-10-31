@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Home Server API
   version: 1.0.0
-  description: 自宅サーバーに保存した株価と分析結果を取得するAPI。
+  description: 自宅サーバーの株価・分析結果と天気予報を取得するAPI。天気予報は仕様定義のみで未実装。
 servers:
   - url: http://localhost:8080
     description: Go APIへの直接接続
@@ -17,6 +17,8 @@ paths:
     $ref: ./paths/latest-price-changes.yaml
   /v1/daily-volume-ratios:
     $ref: ./paths/daily-volume-ratios.yaml
+  /v1/weather/forecast:
+    $ref: ./paths/weather-forecast.yaml
 components:
   responses:
     InternalServerError:
@@ -38,3 +40,9 @@ components:
       $ref: ./schemas/daily-price-change.yaml#/LatestDailyPriceChangesResponse
     DailyVolumeRatioResponse:
       $ref: ./schemas/daily-volume-ratio.yaml#/DailyVolumeRatioResponse
+    WeatherCondition:
+      $ref: ./schemas/weather-forecast.yaml#/WeatherCondition
+    DailyWeatherForecastResponse:
+      $ref: ./schemas/weather-forecast.yaml#/DailyWeatherForecastResponse
+    WeatherForecastResponse:
+      $ref: ./schemas/weather-forecast.yaml#/WeatherForecastResponse

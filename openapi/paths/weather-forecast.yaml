@@ -1,0 +1,32 @@
+get:
+  operationId: getWeatherForecast
+  summary: 東京都の5日間の天気予報を取得する（未実装）
+  description: |
+    東京都庁を代表地点とし、Asia/Tokyoの今日を含む5日分を日付の昇順で返す。
+    地点・期間の指定は不要。有効なメモリキャッシュがあれば再利用する。
+    キャッシュの有効期限は30分。ただし日本時間の日付が変わったら再取得する。
+    fetched_atは外部APIから取得した日時であり、キャッシュ利用時には更新しない。
+    期限切れキャッシュや空配列を成功レスポンスとして返さない。
+  responses:
+    '200':
+      description: 東京都の5日予報。欠損した気温・湿度はnullで返す。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/weather-forecast.yaml#/WeatherForecastResponse'
+    '502':
+      description: 外部APIへの通信失敗・タイムアウト・不正な応答、または必要な5日分の日付がそろわない。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            message: 天気予報を取得できませんでした
+    '500':
+      description: 予期しない内部エラー。内部エラーの詳細は公開しない。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            message: 天気予報を取得できませんでした
