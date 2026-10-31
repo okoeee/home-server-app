@@ -1,12 +1,14 @@
 package fetch
 
 import (
+	domainmodel "api/domain/model"
 	"api/external/openmeteo/model"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -17,7 +19,6 @@ const (
 	tokyoCityHallLatitude  = "35.689444"
 	tokyoCityHallLongitude = "139.691667"
 	forecastTimezone       = "Asia/Tokyo"
-	forecastDays           = "5"
 )
 
 type OpenMeteoClient struct {
@@ -37,7 +38,7 @@ func (client *OpenMeteoClient) FetchForecast(ctx context.Context) (model.Forecas
 	query.Set("latitude", tokyoCityHallLatitude)
 	query.Set("longitude", tokyoCityHallLongitude)
 	query.Set("timezone", forecastTimezone)
-	query.Set("forecast_days", forecastDays)
+	query.Set("forecast_days", strconv.Itoa(domainmodel.WeatherForecastDays))
 	query.Set("temperature_unit", "celsius")
 	query.Set("daily", "weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean")
 
