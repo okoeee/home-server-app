@@ -100,7 +100,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 天気APIの選定理由とキャッシュの設計は、[documents/weather-design.md](documents/weather-design.md)を参照してください。
 
-天気APIはOpenAPI仕様・Go／TypeScriptモデル、Open-Meteo取得クライアント、予報の変換・検証処理とメモリキャッシュを追加済みです。取得処理とキャッシュの接続、`GET /v1/weather/forecast`のエンドポイントと画面は未実装です。
+天気APIは`GET /v1/weather/forecast`で東京都の5日予報を取得できます。天気の画面は未実装です。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
 
@@ -231,6 +231,18 @@ MySQLコンテナを起動し、`.env`にJ-QuantsのAPIキーとDB設定を用�
 ```
 
 開始日と終了日は`YYYY-MM-DD`形式で入力します。指定期間内の営業日ごとにJ-Quantsから株価日足を取得し、`daily_prices`へUPSERTします。保存処理は1営業日単位のトランザクションで実行し、日付と保存件数をログへ出力します。同じ期間の再実行も可能です。
+
+## 天気予報の取得API
+
+起動したAPIに対して、Caddy経由で次を実行します。Go APIへの直接接続は`http://localhost:8080/v1/weather/forecast`です。
+
+```bash
+curl http://localhost:3000/api/v1/weather/forecast
+```
+
+東京都庁を代表地点とし、日本時間の今日を含む5日分の天気・最高／最低気温・平均相対湿度を日付順で返します。パラメーターやAPIキーは不要です。APIコンテナからOpen-Meteoへのインターネット接続が必要です。
+
+初回に取得し、以降は30分間メモリキャッシュを再利用します。日本時間の日付が変わった場合は再取得し、キャッシュ利用時は`fetched_at`を更新しません。気温・湿度の欠損は`null`、未対応・欠損の天気コードは`unknown`です。取得・検証の失敗は`502`、予期しない内部エラーは`500`を返します。詳細とレスポンス例は[天気の設計資料](documents/weather-design.md)を参照してください。
 
 ## 騰落率の取得API
 

@@ -2,7 +2,7 @@
 
 ## 目的と範囲
 
-東京都の1地点について、今日を含む今後5日間の予報をホームに表示する。以下は実装前の設計で、天気機能は未実装。
+東京都の1地点について、今日を含む今後5日間の予報をホームに表示する。予報の取得APIは実装済みで、ホームでの表示は未実装。
 
 - 日別5日分：天気・最高／最低気温（℃）・平均相対湿度（%）。
 - 日付の区切りは`Asia/Tokyo`にそろえる。
@@ -64,7 +64,7 @@ Open-Meteoの予報APIには、地名ではなく緯度・経度を指定する�
 
 ### キャッシュの実装
 
-`apps/api/usecase/weather`の`NewForecastCache(reader, now)`で生成し、`Get(ctx)`で取得する。`now`は時刻を取得する関数で、本番では`time.Now`、テストでは固定時刻を返す関数を渡す。依存先の`ForecastReader.ReadForecast(ctx)`は取得・変換・検証済みの`domain/model.WeatherForecast`を返す契約とする。Open-Meteoとの接続と`main`での生成・共有は後続のAPI実装で行う。
+`apps/api/usecase/weather`の`NewForecastCache(reader, now)`で生成し、`Get(ctx)`で取得する。`now`は時刻を取得する関数で、本番では`time.Now`、テストでは固定時刻を返す関数を渡す。依存先の`ForecastReader.ReadForecast(ctx)`は取得・変換・検証済みの`domain/model.WeatherForecast`を返す契約とする。`main`でOpen-Meteoクライアント・Reader・キャッシュ・Handlerを1回生成し、各リクエストで共有する。
 
 - 取得日時`FetchedAt`から30分未満、かつ日本時間で同じ日付なら再利用し、`FetchedAt`を更新しない。30分ちょうどから期限切れとする。
 - `sync.Mutex`で確認・取得・保存をまとめて保護し、正常な取得が完了した後のリクエストは同じ結果を使う。
@@ -87,7 +87,7 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 日別予報の対象日と、Go側の最終取得日時を区別する。キャッシュを返す際も取得日時は更新せず、最後に外部APIから取得した時刻を表示する。
 
-## 天気APIのインターフェース（実装予定）
+## 天気APIのインターフェース
 
 `GET /v1/weather/forecast`で、東京都の今日を含む5日間の予報を返す。リクエストボディ・クエリパラメーターは不要。地点・期間・タイムゾーンはGo側で固定する。Caddy・Vite経由では`GET /api/v1/weather/forecast`を呼び出す。
 
@@ -163,11 +163,11 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 エラーのJSON形式は既存APIと同じ`{"message":"天気予報を取得できませんでした"}`とする。外部APIのレスポンスや内部エラーの詳細はそのまま公開しない。期限切れのキャッシュや空配列を成功レスポンスの代わりに返さない。
 
-この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。現時点では仕様・モデル、外部API取得クライアント、アプリ内モデルへの変換・整合性検証とメモリキャッシュを追加済み。取得処理とキャッシュの接続、Handler・ルート・画面は未実装。
+この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。取得・変換・検証・キャッシュをHandlerとルートに接続済み。画面は未実装。
 
 ## Open-Meteo取得クライアント
 
-`apps/api/external/openmeteo/fetch`の`NewClient()`でクライアントを作り、`FetchForecast(ctx)`で外部API用の`model.Forecast`を取得する。起動処理やHandlerへの接続は後続で行う。
+`apps/api/external/openmeteo/fetch`の`NewClient()`でクライアントを作り、`FetchForecast(ctx)`で外部API用の`model.Forecast`を取得する。`apps/api/external/openmeteo`の`NewForecastReader(fetcher, now)`が取得結果をmapperへ渡し、検証済みの予報をキャッシュへ返す。取得日時には通信完了後の`now()`を使用する。
 
 - 取得先：`https://api.open-meteo.com/v1/forecast`。認証不要。
 - 固定パラメーター：東京都庁の緯度・経度、`timezone=Asia/Tokyo`、`forecast_days=5`、`temperature_unit=celsius`。
@@ -182,7 +182,7 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 予報日数は`domain/model.WeatherForecastDays`（5日）に統一し、取得リクエストと配列の検証で共有する。日数の変更時はOpenAPIの`minItems`・`maxItems`と関連資料も同時に更新する。
 
-`apps/api/external/openmeteo/mapper`の`ToWeatherForecast(forecast, fetchedAt)`で、外部レスポンスを`domain/model.WeatherForecast`へ変換する。Domainは外部APIやOpenAPIの型に依存しない。HTTPレスポンス用の生成モデルへの変換は、後続のHandler実装で行う。
+`apps/api/external/openmeteo/mapper`の`ToWeatherForecast(forecast, fetchedAt)`で、外部レスポンスを`domain/model.WeatherForecast`へ変換する。Domainは外部APIやOpenAPIの型に依存しない。HTTPレスポンス用の生成モデルへの変換は`handler.WeatherHandler`で行う。
 
 - 取得日時を日本時間（UTC+9）へ変換し、その暦日を「今日」とする。タイムゾーンDBのないコンテナでも動作するよう固定オフセットを使う。
 - 日付・天気コード・最高／最低気温・平均湿度の配列が、それぞれ5件あることを確認する。
