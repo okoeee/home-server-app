@@ -96,6 +96,9 @@ func TestGet_ReadFailureDoesNotOverwriteCache(t *testing.T) {
 			if !errors.Is(err, readErr) {
 				t.Errorf("error = %v, want %v", err, readErr)
 			}
+			if !errors.Is(err, ErrForecastUnavailable) {
+				t.Errorf("error = %v, want ErrForecastUnavailable", err)
+			}
 			if !reflect.DeepEqual(got, model.WeatherForecast{}) {
 				t.Errorf("returned stale result: %+v", got)
 			}

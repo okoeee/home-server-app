@@ -3,12 +3,16 @@ package weather
 import (
 	"api/domain/model"
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 )
 
 const forecastCacheTTL = 30 * time.Minute
+
+// ErrForecastUnavailable は外部予報の取得または検証に失敗したことを表す。
+var ErrForecastUnavailable = errors.New("weather forecast unavailable")
 
 var japanTimezone = time.FixedZone("Asia/Tokyo", 9*60*60)
 
@@ -48,7 +52,7 @@ func (cache *ForecastCache) Get(ctx context.Context) (model.WeatherForecast, err
 
 	forecast, err := cache.reader.ReadForecast(ctx)
 	if err != nil {
-		return model.WeatherForecast{}, fmt.Errorf("read weather forecast: %w", err)
+		return model.WeatherForecast{}, fmt.Errorf("%w: %w", ErrForecastUnavailable, err)
 	}
 	// 成功した結果だけを保存する。返却値からキャッシュを書き換えられないようコピーする。
 	cached := cloneForecast(forecast)
