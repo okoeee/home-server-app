@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Home Server API
   version: 1.0.0
-  description: 自宅サーバーの株価・分析結果と天気予報を取得するAPI。天気予報は仕様定義のみで未実装。
+  description: 自宅サーバーの株価・分析結果と天気予報を取得するAPI。
 servers:
   - url: http://localhost:8080
     description: Go APIへの直接接続

@@ -1,6 +1,6 @@
 get:
   operationId: getWeatherForecast
-  summary: 東京都の5日間の天気予報を取得する（未実装）
+  summary: 東京都の5日間の天気予報を取得する
   description: |
     東京都庁を代表地点とし、Asia/Tokyoの今日を含む5日分を日付の昇順で返す。
     地点・期間の指定は不要。有効なメモリキャッシュがあれば再利用する。
