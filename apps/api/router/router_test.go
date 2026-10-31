@@ -47,6 +47,7 @@ func newTestRouter(priceCalculator handler.DailyPriceChangeCalculator, volumeCal
 		handler.NewStockHandler(stockQuerierStub{}),
 		handler.NewDailyPriceChangeHandler(priceCalculator),
 		handler.NewDailyVolumeRatioHandler(volumeCalculator),
+		handler.NewWeatherHandler(weatherForecastStub{}),
 	)
 }
 
@@ -91,6 +92,7 @@ func TestNewRouter_VersionedRoutes(t *testing.T) {
 		{path: "/daily-price-changes/latest", wantStatus: http.StatusNotFound},
 		{path: "/daily-volume-ratios?date=2026-10-19", wantStatus: http.StatusNotFound},
 		{path: "/stocks/12340/prices", wantStatus: http.StatusNotFound},
+		{path: "/weather/forecast", wantStatus: http.StatusNotFound},
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
