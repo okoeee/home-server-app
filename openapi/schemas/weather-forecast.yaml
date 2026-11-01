@@ -1,0 +1,75 @@
+WeatherCondition:
+  type: string
+  description: |
+    本アプリで定義する天気の分類。Open-Meteoのコードから変換する。
+    日別ではその日の最も厳しい天気を表し、時間的な変化や台風の有無は表さない。
+    未対応のコード・欠損はunknown。日本語表示と外部コードの対応はdocuments/weather-design.mdを参照。
+  enum:
+    - clear
+    - mainly_clear
+    - partly_cloudy
+    - overcast
+    - fog
+    - drizzle
+    - freezing_drizzle
+    - rain
+    - freezing_rain
+    - snow
+    - snow_grains
+    - rain_showers
+    - snow_showers
+    - thunderstorm
+    - thunderstorm_with_hail
+    - unknown
+DailyWeatherForecastResponse:
+  type: object
+  required: [date, weather, temperature_max, temperature_min, relative_humidity_mean]
+  properties:
+    date:
+      type: string
+      format: date
+      x-go-type: string
+      description: Asia/Tokyoでの予報対象日。日時への変換をせず暦日として扱う。
+      example: '2026-10-31'
+    weather:
+      $ref: '#/WeatherCondition'
+    temperature_max:
+      type: number
+      format: double
+      nullable: true
+      description: 日最高気温（℃）。欠損時はnull。キーは常に返す。
+      example: 21.5
+    temperature_min:
+      type: number
+      format: double
+      nullable: true
+      description: 日最低気温（℃）。欠損時はnull。キーは常に返す。
+      example: 13.2
+    relative_humidity_mean:
+      type: number
+      format: double
+      nullable: true
+      minimum: 0
+      maximum: 100
+      description: 日平均の相対湿度（%）。現在の湿度ではない。欠損時はnull。キーは常に返す。
+      example: 62
+WeatherForecastResponse:
+  type: object
+  required: [location_name, fetched_at, forecasts]
+  properties:
+    location_name:
+      type: string
+      description: 東京都庁を代表地点とする表示名。
+      example: 東京都
+    fetched_at:
+      type: string
+      format: date-time
+      description: 外部APIから取得した日時。RFC 3339形式でオフセットを含む。キャッシュ利用時も元の日時を返す。
+      example: '2026-10-31T09:00:00+09:00'
+    forecasts:
+      type: array
+      minItems: 5
+      maxItems: 5
+      description: Asia/Tokyoの今日から連続する5日分。日付の昇順で返す。
+      items:
+        $ref: '#/DailyWeatherForecastResponse'

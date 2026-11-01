@@ -2,11 +2,15 @@ package main
 
 import (
 	"api/db"
+	"api/external/openmeteo"
+	openmeteofetch "api/external/openmeteo/fetch"
 	"api/handler"
 	"api/infrastructure/mysql"
 	"api/router"
 	"api/usecase/dailyprice"
+	"api/usecase/weather"
 	"log"
+	"time"
 )
 
 func main() {
@@ -32,10 +36,16 @@ func main() {
 	volumeRatioCalculator := dailyprice.NewDailyVolumeRatioCalculator(dailyPriceRepository)
 	dailyVolumeRatioHandler := handler.NewDailyVolumeRatioHandler(volumeRatioCalculator)
 
+	weatherClient := openmeteofetch.NewClient()
+	forecastReader := openmeteo.NewForecastReader(weatherClient, time.Now)
+	forecastCache := weather.NewForecastCache(forecastReader, time.Now)
+	weatherHandler := handler.NewWeatherHandler(forecastCache)
+
 	routerErr := router.NewRouter(
 		stockHandler,
 		dailyPriceChangeHandler,
 		dailyVolumeRatioHandler,
+		weatherHandler,
 	).Run()
 
 	if routerErr != nil {

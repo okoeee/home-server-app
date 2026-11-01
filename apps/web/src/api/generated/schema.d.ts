@@ -83,6 +83,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/weather/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 東京都の5日間の天気予報を取得する
+         * @description 東京都庁を代表地点とし、Asia/Tokyoの今日を含む5日分を日付の昇順で返す。
+         *     地点・期間の指定は不要。有効なメモリキャッシュがあれば再利用する。
+         *     キャッシュの有効期限は30分。ただし日本時間の日付が変わったら再取得する。
+         *     fetched_atは外部APIから取得した日時であり、キャッシュ利用時には更新しない。
+         *     期限切れキャッシュや空配列を成功レスポンスとして返さない。
+         */
+        get: operations["getWeatherForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -150,6 +174,55 @@ export interface components {
             /** @description 出来高倍率（1.5は1.5倍）。百分率ではない。 */
             ratio: components["schemas"]["DecimalString"];
         };
+        /**
+         * @description 本アプリで定義する天気の分類。Open-Meteoのコードから変換する。
+         *     日別ではその日の最も厳しい天気を表し、時間的な変化や台風の有無は表さない。
+         *     未対応のコード・欠損はunknown。日本語表示と外部コードの対応はdocuments/weather-design.mdを参照。
+         * @enum {string}
+         */
+        WeatherCondition: "clear" | "mainly_clear" | "partly_cloudy" | "overcast" | "fog" | "drizzle" | "freezing_drizzle" | "rain" | "freezing_rain" | "snow" | "snow_grains" | "rain_showers" | "snow_showers" | "thunderstorm" | "thunderstorm_with_hail" | "unknown";
+        DailyWeatherForecastResponse: {
+            /**
+             * Format: date
+             * @description Asia/Tokyoでの予報対象日。日時への変換をせず暦日として扱う。
+             * @example 2026-10-31
+             */
+            date: string;
+            weather: components["schemas"]["WeatherCondition"];
+            /**
+             * Format: double
+             * @description 日最高気温（℃）。欠損時はnull。キーは常に返す。
+             * @example 21.5
+             */
+            temperature_max: number | null;
+            /**
+             * Format: double
+             * @description 日最低気温（℃）。欠損時はnull。キーは常に返す。
+             * @example 13.2
+             */
+            temperature_min: number | null;
+            /**
+             * Format: double
+             * @description 日平均の相対湿度（%）。現在の湿度ではない。欠損時はnull。キーは常に返す。
+             * @example 62
+             */
+            relative_humidity_mean: number | null;
+        };
+        WeatherForecastResponse: {
+            /**
+             * @description 東京都庁を代表地点とする表示名。
+             * @example 東京都
+             */
+            location_name: string;
+            /**
+             * Format: date-time
+             * @description 外部APIから取得した日時。RFC 3339形式でオフセットを含む。キャッシュ利用時も元の日時を返す。
+             * @example 2026-10-31T09:00:00+09:00
+             */
+            fetched_at: string;
+            /** @description Asia/Tokyoの今日から連続する5日分。日付の昇順で返す。 */
+            forecasts: components["schemas"]["DailyWeatherForecastResponse"][];
+        };
     };
     responses: {
         /** @description データ取得または計算に失敗した。 */
@@ -175,6 +248,9 @@ export type DailyPriceResponse = components['schemas']['DailyPriceResponse'];
 export type DailyPriceChangeResponse = components['schemas']['DailyPriceChangeResponse'];
 export type LatestDailyPriceChangesResponse = components['schemas']['LatestDailyPriceChangesResponse'];
 export type DailyVolumeRatioResponse = components['schemas']['DailyVolumeRatioResponse'];
+export type WeatherCondition = components['schemas']['WeatherCondition'];
+export type DailyWeatherForecastResponse = components['schemas']['DailyWeatherForecastResponse'];
+export type WeatherForecastResponse = components['schemas']['WeatherForecastResponse'];
 export type ResponseInternalServerError = components['responses']['InternalServerError'];
 export type $defs = Record<string, never>;
 export interface operations {
@@ -279,6 +355,54 @@ export interface operations {
                 };
             };
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    getWeatherForecast: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 東京都の5日予報。欠損した気温・湿度はnullで返す。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeatherForecastResponse"];
+                };
+            };
+            /** @description 予期しない内部エラー。内部エラーの詳細は公開しない。 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "天気予報を取得できませんでした"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 外部APIへの通信失敗・タイムアウト・不正な応答、または必要な5日分の日付がそろわない。 */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "天気予報を取得できませんでした"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
 }
