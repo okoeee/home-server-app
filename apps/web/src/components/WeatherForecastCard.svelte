@@ -11,7 +11,6 @@
 
 <section class="weather-card" aria-labelledby="weather-heading" aria-busy={loading}>
   <h2 id="weather-heading">{forecast?.location_name ?? '東京都'}の天気</h2>
-  <p class="description">今日を含む5日間・東京都庁付近の予報（日本時間）</p>
 
   {#if loading}
     <p role="status">天気予報を読み込み中です。</p>
@@ -38,7 +37,6 @@
     </p>
   {/if}
 
-  <p class="attribution">天気データ：<a href="https://open-meteo.com/">Open-Meteo</a></p>
 </section>
 
 <style>
