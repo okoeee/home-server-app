@@ -76,6 +76,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── naming-conventions.md
 │   ├── stock-price-design.md
 │   ├── testing-policy.md
+│   ├── ui-library-comparison.md
 │   └── weather-design.md
 ├── openapi/
 │   ├── openapi.yaml
@@ -103,6 +104,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 天気APIは`GET /v1/weather/forecast`で東京都の5日予報を取得し、ホームの天気カードに表示します。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
+
+UIキット・アイコンの比較と導入案は、[documents/ui-library-comparison.md](documents/ui-library-comparison.md)を参照してください。
 
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
 

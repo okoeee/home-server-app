@@ -61,6 +61,8 @@ Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。
 
 ## フロントエンドの構成
 
+UIキット・アイコンは未導入。候補の比較と導入案は[ui-library-comparison.md](ui-library-comparison.md)を参照する。
+
 `apps/web`にSvelte・TypeScript・Viteを導入済み。ローカルの開発サーバーまたはComposeの`web`サービスで起動し、最新の保存済み取引日の騰落率を自動取得して表示する。
 
 現在のパッケージ管理はnpmを使用し、`package-lock.json`を管理する。pnpmも候補として検討したが、移行は実施していない。
