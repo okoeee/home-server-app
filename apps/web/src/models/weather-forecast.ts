@@ -1,5 +1,17 @@
 import type { WeatherCondition } from '../api/generated/schema'
 
+const weekdayFormatter = new Intl.DateTimeFormat('ja-JP', {
+  weekday: 'short',
+  timeZone: 'UTC',
+})
+
+export function formatForecastDate(date: string): string {
+  const [year, month, day] = date.split('-').map(Number)
+  // APIの暦日を保ったまま曜日を計算し、ブラウザのタイムゾーンへ変換しない。
+  const weekday = weekdayFormatter.format(new Date(Date.UTC(year, month - 1, day)))
+  return `${month}/${day}（${weekday}）`
+}
+
 export const weatherLabels: Record<WeatherCondition, string> = {
   clear: '快晴',
   mainly_clear: '晴れ',

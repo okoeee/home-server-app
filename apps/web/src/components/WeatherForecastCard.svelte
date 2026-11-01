@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { WeatherForecastResponse } from '../api/generated/schema'
-  import { weatherLabels } from '../models/weather-forecast'
+  import { formatForecastDate, weatherLabels } from '../models/weather-forecast'
 
   let { forecast, loading, error }: {
     forecast: WeatherForecastResponse | null
@@ -23,7 +23,7 @@
     <ul class="forecast-days">
       {#each forecast.forecasts as day (day.date)}
         <li class="forecast-day">
-          <h3><time datetime={day.date}>{day.date}</time></h3>
+          <h3><time datetime={day.date}>{formatForecastDate(day.date)}</time></h3>
           <p class="condition">{weatherLabels[day.weather] ?? weatherLabels.unknown}</p>
           <dl>
             <div><dt>最高気温</dt><dd>{day.temperature_max === null ? '—' : `${day.temperature_max} ℃`}</dd></div>
