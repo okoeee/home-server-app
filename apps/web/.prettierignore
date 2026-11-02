@@ -1,0 +1,2 @@
+# OpenAPIの生成ツールで管理するため、Prettierでは変更しない。
+src/api/generated/
