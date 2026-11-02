@@ -130,6 +130,15 @@ npm run check
 npm run build
 ```
 
+フロントのSvelte・TypeScript・CSSとテストの整形は、`apps/web`で実行します。
+
+```bash
+npm run format
+npm run format:check
+```
+
+`format`は整形して保存し、`format:check`は整形済みかを確認します。設定は`.prettierrc.json`で共有し、OpenAPIの生成コードは`.prettierignore`で対象外にしています。エディターのPrettier連携で保存時の整形を有効にすれば、同じ設定を使って自動整形できます。
+
 ホームでは天気APIも1回呼び出し、東京都の5日分の天気・最高／最低気温・平均湿度と取得日時を表示します。天気名はenumから日本語へ変換し、欠損値は「—」と表示します。日付はAPIの暦日を保って`10/31（土）`のように曜日付きで表示し、取得日時は日本時間で表示します。天気と騰落率の読み込み・エラー状態は独立しています。
 
 Tailwind CSS 4・shadcn-svelteのCardとLucideを利用し、ダークな天気・株価カードを表示します。天気アイコンは16種類のenumに対応し、日本語名と並べます。共通UIは`src/lib/components/ui/`、機能別コンポーネントは`src/components/`に置きます。`components.json`がshadcn-svelteの設定です。色・角丸・フォントは`src/app.css`で調整し、ダーク表示は`index.html`の`dark`クラスで固定しています。
