@@ -4,7 +4,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 
 現在は、GoとGinで実装したAPIをDocker Composeで起動できます。
 
-フロントエンドはSvelte・TypeScript・Viteで実装し、ローカルの開発サーバーまたはComposeの`web`サービスで天気予報と騰落率を表示できます。
+フロントエンドはSvelte・TypeScript・Viteで実装しています。
 
 ## 必要な環境
 
@@ -121,8 +121,6 @@ npm run dev
 
 ターミナルに表示されたURL（通常は`http://localhost:5173`）をブラウザで開きます。停止は`Ctrl+C`です。APIを利用する場合は、先にプロジェクトルートで`docker compose up -d api`を実行します。Viteは`/api/*`から`/api`を除き、`http://localhost:8080`へ転送します。
 
-ページを開くと、DBに保存された最新取引日の騰落率を1回のAPI通信で取得します。フロント側で数値として降順に並べ、先頭10件を表示します（10件未満なら全件）。同率の場合は取得順を保ちます。日付入力フォームは設けず、APIが返した対象日と表示件数を併記します。読み込み中・データなし・取得エラーも表示します。比較元は銘柄ごとの直近の保存済み日足です。APIは引き続き全件を返します。
-
 `apps/web`で型チェックと本番用ビルドを実行できます。
 
 ```bash
@@ -138,10 +136,6 @@ npm run format:check
 ```
 
 `format`は整形して保存し、`format:check`は整形済みかを確認します。設定は`.prettierrc.json`で共有し、OpenAPIの生成コードは`.prettierignore`で対象外にしています。エディターのPrettier連携で保存時の整形を有効にすれば、同じ設定を使って自動整形できます。
-
-ホームでは天気APIも1回呼び出し、東京都の5日分の天気・最高／最低気温・平均湿度と取得日時を表示します。天気名はenumから日本語へ変換し、欠損値は「—」と表示します。日付はAPIの暦日を保って`10/31（土）`のように曜日付きで表示し、取得日時は日本時間で表示します。天気と騰落率の読み込み・エラー状態は独立しています。
-
-Tailwind CSS 4・shadcn-svelteのCardとLucideを利用し、ダークな天気・株価カードを表示します。天気アイコンは16種類のenumに対応し、日本語名と並べます。共通UIは`src/lib/components/ui/`、機能別コンポーネントは`src/components/`に置きます。`components.json`がshadcn-svelteの設定です。色・角丸・フォントは`src/app.css`で調整し、ダーク表示は`index.html`の`dark`クラスで固定しています。
 
 API通信のテストは`apps/web`で`npm test`を実行します。テストにはNode.js 22.12以上が必要です。
 
@@ -167,7 +161,7 @@ DockerfileはNode.jsで本番用ファイルをビルドし、生成された`di
 
 ## OpenAPIとGo・TypeScriptモデルの生成
 
-API仕様の入口は[openapi/openapi.yaml](openapi/openapi.yaml)です。`paths/`にエンドポイント、`schemas/`にモデル、`responses/`に共通レスポンスを分け、`$ref`で参照します。Go APIへ直接接続する場合のパスを定義し、Caddy・Vite経由では先頭に`/api`を付けます。
+API仕様は[openapi/openapi.yaml](openapi/openapi.yaml)、画面・設計の詳細は`documents/`で管理します。
 
 `openapi/`内の仕様または`apps/api/oapi-codegen.yaml`を変更した場合は、プロジェクトルートで実行します。
 
@@ -185,14 +179,6 @@ Redocly CLI 2.71.2で分割した仕様を`openapi/dist/openapi.yaml`へ結合�
 | TypeScript | `openapi-typescript 7.13.0` | `apps/web/src/api/generated/schema.d.ts` |
 
 ツールの取得・バージョン解決にネットワーク接続を使用します。生成ファイルはGit管理し、直接編集しません。結合結果の`openapi/dist/`と依存関係の`openapi/node_modules/`はGit管理しません。仕様・設定・ロックファイル・生成コード・利用側の変更は同じPRに含めます。
-
-TypeScriptは`--root-types --root-types-no-schema-prefix`を指定し、`DailyPriceChangeResponse`などをトップレベルの型エイリアスとして生成します。利用側は`src/api/generated/schema.d.ts`から直接importし、手書きの型エイリアスは設けません。表示用の上位10件の選択処理は引き続き`src/models/daily-price-change.ts`で管理します。
-
-モデル名は仕様全体で一意にし、共通モデルは参照で再利用します。同名で内容が異なるスキーマを結合するときは、`--component-renaming-conflicts-severity=error`により自動改名せず失敗させます。同じYAMLマップ内のキーの重複もパースエラーになります。
-
-生成するのはAPI用モデルだけです。Handler・ルート・通信処理・入力検証は手書きのままにし、Domainやsqlcのモデルとは分けます。日付・数値は既存のJSON表現に合わせて文字列で扱います。最新取引日の`null`と一覧の空配列も維持します。モデル生成だけで実行時の入力・レスポンス検証が追加されるわけではありません。
-
-CIでの再生成差分チェックは、次の段階で追加します。
 
 ## sqlc
 
@@ -242,8 +228,6 @@ API全体のテストは次のコマンドで実行します。
 cd apps/api
 go test ./...
 ```
-
-`apps/api/router`のHTTPテストはUsecaseをstubに置き換え、パス・入力検証・JSON・ステータスコードを確認します。実DBや外部APIは使用せず、計算や処理の組み合わせはDomain・Usecaseのテストで確認します。
 
 ## デプロイ
 
