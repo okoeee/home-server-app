@@ -80,12 +80,6 @@
         <Card.Description class="mt-1 pl-12">
           {#if date}{date}時点・保存済みの最新取引日{:else}保存済みの日足から、騰落率の高い順に表示{/if}
         </Card.Description>
-        <Card.Action
-          ><span
-            class="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground"
-            >上位10件</span
-          ></Card.Action
-        >
       </Card.Header>
       <Card.Content>
         {#if loading}

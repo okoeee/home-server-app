@@ -31,12 +31,6 @@
         </h2>
       </Card.Title>
       <Card.Description class="mt-1 text-[10px]">最高 / 最低（℃）・日平均湿度</Card.Description>
-      <Card.Action
-        ><span
-          class="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] text-muted-foreground"
-          >5日間</span
-        ></Card.Action
-      >
     </Card.Header>
 
     <Card.Content>

@@ -6,14 +6,12 @@
 
 <div class="table-container">
   <table>
-    <caption>騰落率の降順・上位10件（表示：{changes.length}件）</caption>
+    <caption class="sr-only">株価の騰落率</caption>
     <thead>
       <tr>
         <th scope="col">銘柄コード</th>
         <th scope="col">会社名</th>
-        <th scope="col">対象日</th>
         <th scope="col">終値（円）</th>
-        <th scope="col">比較元の日付</th>
         <th scope="col">比較元の終値（円）</th>
         <th scope="col">騰落率（%）</th>
       </tr>
@@ -23,9 +21,7 @@
         <tr>
           <td>{change.symbol}</td>
           <td>{change.company_name ?? '名称未登録'}</td>
-          <td>{change.trade_date}</td>
           <td class="number">{change.close_price}</td>
-          <td>{change.previous_trade_date}</td>
           <td class="number">{change.previous_close_price}</td>
           <td
             class="number change-rate"
@@ -46,12 +42,6 @@
     width: 100%;
     border-collapse: collapse;
     white-space: nowrap;
-  }
-  caption {
-    text-align: left;
-    padding: 0 0 1rem;
-    font-size: 0.75rem;
-    color: var(--muted-foreground);
   }
   th,
   td {
