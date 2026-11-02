@@ -4,8 +4,24 @@ import { fetchLatestDailyPriceChanges } from '../src/api/daily-price-changes.ts'
 
 test('1回の通信で最新取引日と全件を取得する', async (t) => {
   const changes = [
-    { symbol: '12340', company_name: 'サンプル株式会社', trade_date: '2026-10-19', close_price: '110.5', previous_trade_date: '2026-10-16', previous_close_price: '100.0', change_rate: '10.5' },
-    { symbol: '56780', company_name: null, trade_date: '2026-10-19', close_price: '90.0', previous_trade_date: '2026-10-15', previous_close_price: '100.0', change_rate: '-10' },
+    {
+      symbol: '12340',
+      company_name: 'サンプル株式会社',
+      trade_date: '2026-10-19',
+      close_price: '110.5',
+      previous_trade_date: '2026-10-16',
+      previous_close_price: '100.0',
+      change_rate: '10.5',
+    },
+    {
+      symbol: '56780',
+      company_name: null,
+      trade_date: '2026-10-19',
+      close_price: '90.0',
+      previous_trade_date: '2026-10-15',
+      previous_close_price: '100.0',
+      change_rate: '-10',
+    },
   ]
   const result = { trade_date: '2026-10-19', changes }
   const fetchMock = t.mock.method(globalThis, 'fetch', async (url) => {
@@ -35,6 +51,8 @@ test('HTTPエラーでは成功結果を返さない', async (t) => {
 
 test('通信失敗を呼び出し元へ返す', async (t) => {
   const failure = new TypeError('Failed to fetch')
-  t.mock.method(globalThis, 'fetch', async () => { throw failure })
+  t.mock.method(globalThis, 'fetch', async () => {
+    throw failure
+  })
   await assert.rejects(fetchLatestDailyPriceChanges(), (error) => error === failure)
 })

@@ -5,21 +5,36 @@ import type { DailyPriceChangeResponse } from '../src/api/generated/schema'
 
 function priceChange(symbol: string, rate: string): DailyPriceChangeResponse {
   return {
-    symbol, company_name: null, change_rate: rate, trade_date: '2026-10-27',
-    close_price: '100', previous_trade_date: '2026-10-26', previous_close_price: '100',
+    symbol,
+    company_name: null,
+    change_rate: rate,
+    trade_date: '2026-10-27',
+    close_price: '100',
+    previous_trade_date: '2026-10-26',
+    previous_close_price: '100',
   }
 }
 
 test('文字列ではなく数値の降順で並べ、元の配列は変更しない', () => {
-  const changes = ['2', '-10', '10.5', '0', '-1.5'].map((rate, index) => priceChange(String(index), rate))
+  const changes = ['2', '-10', '10.5', '0', '-1.5'].map((rate, index) =>
+    priceChange(String(index), rate),
+  )
   const original = [...changes]
-  assert.deepEqual(selectTopDailyPriceChanges(changes).map(row => row.change_rate), ['10.5', '2', '0', '-1.5', '-10'])
+  assert.deepEqual(
+    selectTopDailyPriceChanges(changes).map((row) => row.change_rate),
+    ['10.5', '2', '0', '-1.5', '-10'],
+  )
   assert.deepEqual(changes, original)
 })
 
 test('11件以上なら並べ替えた後の先頭10件だけを返す', () => {
-  const changes = Array.from({ length: 12 }, (_, index) => priceChange(String(index), String(index)))
-  assert.deepEqual(selectTopDailyPriceChanges(changes).map(row => row.change_rate), ['11', '10', '9', '8', '7', '6', '5', '4', '3', '2'])
+  const changes = Array.from({ length: 12 }, (_, index) =>
+    priceChange(String(index), String(index)),
+  )
+  assert.deepEqual(
+    selectTopDailyPriceChanges(changes).map((row) => row.change_rate),
+    ['11', '10', '9', '8', '7', '6', '5', '4', '3', '2'],
+  )
 })
 
 test('同じ騰落率の銘柄は元の順番を保つ', () => {
