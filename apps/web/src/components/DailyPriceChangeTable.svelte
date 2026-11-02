@@ -27,7 +27,11 @@
           <td class="number">{change.close_price}</td>
           <td>{change.previous_trade_date}</td>
           <td class="number">{change.previous_close_price}</td>
-          <td class="number change-rate" class:positive={Number(change.change_rate) > 0} class:negative={Number(change.change_rate) < 0}>{change.change_rate}</td>
+          <td
+            class="number change-rate"
+            class:positive={Number(change.change_rate) > 0}
+            class:negative={Number(change.change_rate) < 0}>{change.change_rate}</td
+          >
         </tr>
       {/each}
     </tbody>
@@ -35,15 +39,50 @@
 </div>
 
 <style>
-  .table-container { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-  caption { text-align: left; padding: 0 0 1rem; font-size: 0.75rem; color: var(--muted-foreground); }
-  th, td { padding: 1rem 0.85rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.8125rem; }
-  th { background: var(--muted); color: var(--muted-foreground); font-size: 0.6875rem; font-weight: 500; }
-  tbody tr:last-child td { border-bottom: 0; }
-  tbody tr:hover { background: color-mix(in srgb, var(--muted) 45%, transparent); }
-  .number { text-align: right; font-variant-numeric: tabular-nums; }
-  .change-rate { font-weight: 600; }
-  .positive { color: var(--primary); }
-  .negative { color: var(--destructive); }
+  .table-container {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+  }
+  caption {
+    text-align: left;
+    padding: 0 0 1rem;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+  }
+  th,
+  td {
+    padding: 1rem 0.85rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8125rem;
+  }
+  th {
+    background: var(--muted);
+    color: var(--muted-foreground);
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--muted) 45%, transparent);
+  }
+  .number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .change-rate {
+    font-weight: 600;
+  }
+  .positive {
+    color: var(--primary);
+  }
+  .negative {
+    color: var(--destructive);
+  }
 </style>

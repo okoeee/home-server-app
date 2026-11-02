@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "shadcn-svelte/tailwind.css";
-@import "@fontsource-variable/inter";
+@import 'tailwindcss';
+@import 'shadcn-svelte/tailwind.css';
+@import '@fontsource-variable/inter';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -117,13 +117,13 @@
 }
 
 @layer base {
-	* {
-		@apply border-border outline-ring/50;
+  * {
+    @apply border-border outline-ring/50;
   }
-	body {
-		@apply min-w-80 bg-background text-foreground antialiased;
+  body {
+    @apply min-w-80 bg-background text-foreground antialiased;
   }
-	html {
-		@apply font-sans;
+  html {
+    @apply font-sans;
   }
 }

@@ -48,7 +48,10 @@
 
 <header class="border-b border-border/70">
   <div class="mx-auto flex max-w-7xl items-center gap-3 px-5 py-5 sm:px-8">
-    <span class="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground"><House size={21} stroke-width={1.6} aria-hidden="true" /></span>
+    <span
+      class="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+      ><House size={21} stroke-width={1.6} aria-hidden="true" /></span
+    >
     <div>
       <h1 class="text-base font-semibold tracking-tight">My Home</h1>
       <p class="mt-0.5 text-xs text-muted-foreground">暮らしとマーケットのダッシュボード</p>
@@ -63,23 +66,43 @@
     <Card.Root class="gap-5 shadow-none">
       <Card.Header>
         <Card.Title>
-          <h2 id="stocks-heading" class="flex items-center gap-3 text-lg font-semibold tracking-tight">
-            <span class="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><TrendingUp size={20} stroke-width={1.6} aria-hidden="true" /></span>
+          <h2
+            id="stocks-heading"
+            class="flex items-center gap-3 text-lg font-semibold tracking-tight"
+          >
+            <span
+              class="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"
+              ><TrendingUp size={20} stroke-width={1.6} aria-hidden="true" /></span
+            >
             株価の騰落率
           </h2>
         </Card.Title>
         <Card.Description class="mt-1 pl-12">
           {#if date}{date}時点・保存済みの最新取引日{:else}保存済みの日足から、騰落率の高い順に表示{/if}
         </Card.Description>
-        <Card.Action><span class="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">上位10件</span></Card.Action>
+        <Card.Action
+          ><span
+            class="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground"
+            >上位10件</span
+          ></Card.Action
+        >
       </Card.Header>
       <Card.Content>
         {#if loading}
-          <p class="py-12 text-center text-sm text-muted-foreground" role="status">読み込み中です。</p>
+          <p class="py-12 text-center text-sm text-muted-foreground" role="status">
+            読み込み中です。
+          </p>
         {:else if error}
-          <p class="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive" role="alert">{error}</p>
+          <p
+            class="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive"
+            role="alert"
+          >
+            {error}
+          </p>
         {:else if changes.length === 0}
-          <p class="py-12 text-center text-sm text-muted-foreground" role="status">データがありません。</p>
+          <p class="py-12 text-center text-sm text-muted-foreground" role="status">
+            データがありません。
+          </p>
         {:else}
           <DailyPriceChangeTable {changes} />
         {/if}
