@@ -95,22 +95,6 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 └── README.md
 ```
 
-株価データの設計は、[documents/stock-price-design.md](documents/stock-price-design.md)を参照してください。
-
-ホームに表示したい情報と配置案は、[documents/home-dashboard.md](documents/home-dashboard.md)を参照してください。
-
-天気APIの選定理由とキャッシュの設計は、[documents/weather-design.md](documents/weather-design.md)を参照してください。
-
-天気APIは`GET /v1/weather/forecast`で東京都の5日予報を取得し、ホームの天気カードに表示します。
-
-構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
-
-UIキット・アイコンの比較と導入案は、[documents/ui-library-comparison.md](documents/ui-library-comparison.md)を参照してください。
-
-命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
-
-テストの範囲・命名・書き方は、[documents/testing-policy.md](documents/testing-policy.md)を参照してください。
-
 ## 開発環境の起動
 
 Dockerを起動し、プロジェクトルートにDB設定を含む`.env`を用意して実行します。
@@ -122,6 +106,8 @@ make
 sqlc生成、OpenAPI用依存のインストールとGo・TypeScriptモデル生成、Dockerイメージのビルドと`web`・`api`・`db`の起動を順に実行します。途中で失敗した場合は後続の処理を実行しません。Go・Node.js・npmはホスト側にも必要で、初回の依存取得にはネットワーク接続を使用します。
 
 起動後は`http://localhost:3000`で画面を確認できます。既存のDBデータは保持しますが、株価データのインポートは実行しません。停止は`docker compose stop`です。`make dev`も同じ処理を実行します。
+
+APIのコードを変更した場合は、`docker compose up -d --build api`で再ビルド・起動して変更を反映します。
 
 ## フロントエンドの開発
 
@@ -238,82 +224,6 @@ MySQLコンテナを起動し、`.env`にJ-QuantsのAPIキーとDB設定を用�
 ```
 
 開始日と終了日は`YYYY-MM-DD`形式で入力します。指定期間内の営業日ごとにJ-Quantsから株価日足を取得し、`daily_prices`へUPSERTします。保存処理は1営業日単位のトランザクションで実行し、日付と保存件数をログへ出力します。同じ期間の再実行も可能です。
-
-## 天気予報の取得API
-
-APIのコードを変更した場合は、`docker compose up -d --build api`で再ビルド・起動して変更を反映します。
-
-起動したAPIに対して、Caddy経由で次を実行します。Go APIへの直接接続は`http://localhost:8080/v1/weather/forecast`です。
-
-```bash
-curl http://localhost:3000/api/v1/weather/forecast
-```
-
-東京都庁を代表地点とし、日本時間の今日を含む5日分の天気・最高／最低気温・平均相対湿度を日付順で返します。パラメーターやAPIキーは不要です。APIコンテナからOpen-Meteoへのインターネット接続が必要です。
-
-初回に取得し、以降は30分間メモリキャッシュを再利用します。日本時間の日付が変わった場合は再取得し、キャッシュ利用時は`fetched_at`を更新しません。気温・湿度の欠損は`null`、未対応・欠損の天気コードは`unknown`です。取得・検証の失敗は`502`、予期しない内部エラーは`500`を返します。詳細とレスポンス例は[天気の設計資料](documents/weather-design.md)を参照してください。
-
-## 騰落率の取得API
-
-データ取得APIのGo側のパスは`/v1`で始まります。Caddy・Vite経由では`/api/v1/...`を使用し、転送時には`/api`だけを除去します。バージョンなしの旧データ取得パスは提供しません。稼働確認用の`/ping`はバージョン外に残します。
-
-### 最新の保存済み取引日
-
-```bash
-curl 'http://localhost:3000/api/v1/daily-price-changes/latest'
-```
-
-レスポンス例:
-
-```json
-{
-  "trade_date": "2026-10-19",
-  "changes": [
-    {
-      "symbol": "12340",
-      "company_name": "サンプル株式会社",
-      "trade_date": "2026-10-19",
-      "close_price": "110.5",
-      "previous_trade_date": "2026-10-16",
-      "previous_close_price": "100.0",
-      "change_rate": "10.5"
-    }
-  ]
-}
-```
-
-「最新」は`daily_prices`内の最も新しい取引日であり、今日や市場の最新営業日を保証するものではありません。API内部で対象日を決定し、その日の騰落率を返します。取り込みの遅れを確認できるよう、画面にも対象日を表示します。
-
-`company_name`は現在の銘柄マスターの会社名です。過去の社名変更履歴は使用しません。マスター未登録でも日足を結果に残し、`company_name: null`を返します。フロントでは会社名の列に「名称未登録」と表示します。
-
-DBが空なら`200`と`{"trade_date":null,"changes":[]}`を返します。最新日に比較可能な銘柄がなくても、過去日には戻さず、その日付と空配列を返します。取得・計算失敗は`500`です。
-
-数値は文字列で返します。`change_rate`は、調整済み終値の差を比較元の調整済み終値で割り、100を掛けた百分率です（例: `"10.5"`は10.5%上昇）。比較元は銘柄ごとの対象日より前の直近の保存済み日足であり、必ずしも前営業日ではありません。
-
-APIは対象日と比較元の両方のデータがある全銘柄を返し、並べ替えや上位10銘柄の抽出はフロント側で行います。騰落率の取得は最新取得のみを公開し、日付指定の`/v1/daily-price-changes`は提供しません。
-
-## 出来高倍率の取得API
-
-```bash
-curl 'http://localhost:8080/v1/daily-volume-ratios?date=2026-10-19'
-```
-
-レスポンス例:
-
-```json
-[
-  {
-    "symbol": "12340",
-    "trade_date": "2026-10-19",
-    "volume": "200.0",
-    "ratio": "2"
-  }
-]
-```
-
-`volume`は対象日の調整済み出来高、`ratio`は対象日より前の直近20件の調整済み出来高の平均に対する倍率です（`"2"`は2倍）。数値は文字列で返します。履歴は銘柄ごとの保存済み日足を使うため、20営業日より長い期間になることがあります。
-
-履歴が20件に満たない銘柄、平均出来高がゼロの銘柄は除外します。対象がなければ`200`と空配列`[]`、日付の未指定・不正は`400`、取得失敗は`500`を返します。並べ替えや件数制限は行いません。
 
 ## テスト
 
