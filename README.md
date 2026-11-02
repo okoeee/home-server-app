@@ -76,6 +76,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── naming-conventions.md
 │   ├── stock-price-design.md
 │   ├── testing-policy.md
+│   ├── ui-library-comparison.md
 │   └── weather-design.md
 ├── openapi/
 │   ├── openapi.yaml
@@ -103,6 +104,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 天気APIは`GET /v1/weather/forecast`で東京都の5日予報を取得し、ホームの天気カードに表示します。
 
 構成と技術選定の理由は、[documents/architecture-decisions.md](documents/architecture-decisions.md)を参照してください。
+
+UIキット・アイコンの比較と導入案は、[documents/ui-library-comparison.md](documents/ui-library-comparison.md)を参照してください。
 
 命名の指針は、[documents/naming-conventions.md](documents/naming-conventions.md)を参照してください。
 
@@ -141,7 +144,9 @@ npm run check
 npm run build
 ```
 
-ホームでは天気APIも1回呼び出し、東京都の5日分の天気・最高／最低気温・平均湿度と取得日時を表示します。天気名はenumから日本語へ変換し、欠損値は「—」と表示します。日付はAPIの暦日を保って`10/31（土）`のように曜日付きで表示し、取得日時は日本時間で表示します。天気と騰落率の読み込み・エラー状態は独立しています。アイコン・UIキットは未導入です。
+ホームでは天気APIも1回呼び出し、東京都の5日分の天気・最高／最低気温・平均湿度と取得日時を表示します。天気名はenumから日本語へ変換し、欠損値は「—」と表示します。日付はAPIの暦日を保って`10/31（土）`のように曜日付きで表示し、取得日時は日本時間で表示します。天気と騰落率の読み込み・エラー状態は独立しています。
+
+Tailwind CSS 4・shadcn-svelteのCardとLucideを利用し、ダークな天気・株価カードを表示します。天気アイコンは16種類のenumに対応し、日本語名と並べます。共通UIは`src/lib/components/ui/`、機能別コンポーネントは`src/components/`に置きます。`components.json`がshadcn-svelteの設定です。色・角丸・フォントは`src/app.css`で調整し、ダーク表示は`index.html`の`dark`クラスで固定しています。
 
 API通信のテストは`apps/web`で`npm test`を実行します。テストにはNode.js 22.12以上が必要です。
 
