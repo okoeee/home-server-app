@@ -147,6 +147,10 @@ CloudFrontは配信元の手前でキャッシュ・配信するCDN。今回は�
 
 家庭内での利用か外部公開か、ドメインやHTTPSの扱いは未決定。Caddyを採用しても、家庭内IPでのアクセスと公開ドメインでのアクセスでは証明書の扱いが異なる。
 
+## サーバーのメトリクス取得（導入方針）
+
+ラズパイ本体のCPU・メモリ・温度を取得するため、Node ExporterをComposeで管理する方針とする。最初は実機でのメトリクス取得の確認までを行い、Prometheus・Go API・画面は後続で追加する。現在は未実装。比較と採用理由は[server-metrics-adr.md](server-metrics-adr.md)を参照する。
+
 ## 開発時の方針
 
 開発環境の起動はルートの`make`を入口とする。sqlc生成、OpenAPI用依存のインストールとモデル生成、Composeによるビルド・起動の順に実行する。生成処理はMakefileにまとめ、生成専用のシェルは置かない。個別の再生成は`make generate-sqlc`・`make generate-openapi`で行う。データの取り込みはこの起動処理に含めない。
