@@ -18,8 +18,8 @@
   } = $props()
 </script>
 
-<section class="w-full max-w-md" aria-labelledby="weather-heading" aria-busy={loading}>
-  <Card.Root size="sm" class="gap-3 shadow-none">
+<section class="min-w-0 w-full max-w-md" aria-labelledby="weather-heading" aria-busy={loading}>
+  <Card.Root size="sm" class="min-w-0 w-full max-w-full gap-3 shadow-none">
     <Card.Header>
       <Card.Title>
         <h2

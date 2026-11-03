@@ -59,16 +59,18 @@
   </div>
 </header>
 
-<main class="mx-auto grid max-w-7xl gap-6 px-5 py-7 sm:px-8 sm:py-9">
+<main
+  class="mx-auto box-border grid w-full min-w-0 max-w-7xl grid-cols-1 gap-6 px-5 py-7 sm:px-8 sm:py-9"
+>
   <WeatherForecastCard {forecast} loading={weatherLoading} error={weatherError} />
 
-  <section aria-labelledby="stocks-heading" aria-busy={loading}>
-    <Card.Root class="gap-5 shadow-none">
-      <Card.Header>
+  <section class="min-w-0 w-full max-w-3xl" aria-labelledby="stocks-heading" aria-busy={loading}>
+    <Card.Root class="min-w-0 w-full max-w-full gap-5 shadow-none">
+      <Card.Header class="min-w-0 grid-cols-[minmax(0,1fr)]">
         <Card.Title>
           <h2
             id="stocks-heading"
-            class="flex items-center gap-3 text-lg font-semibold tracking-tight"
+            class="flex items-center gap-3 text-sm font-semibold tracking-tight"
           >
             <span
               class="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"
@@ -81,7 +83,7 @@
           {#if date}{date}時点・保存済みの最新取引日{:else}保存済みの日足から、騰落率の高い順に表示{/if}
         </Card.Description>
       </Card.Header>
-      <Card.Content>
+      <Card.Content class="min-w-0 w-full">
         {#if loading}
           <p class="py-12 text-center text-sm text-muted-foreground" role="status">
             読み込み中です。
