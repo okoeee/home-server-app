@@ -61,7 +61,7 @@ Caddyも現在はHTTPのみで、HTTPSの自動化は有効にしていない。
 
 ## フロントエンドの構成
 
-UIはTailwind CSS 4・shadcn-svelteのCard部品、アイコンはLucideを採用した。ダークなカードの見た目を共通のテーマで調整する。候補の比較と採用理由は[ui-library-comparison.md](ui-library-comparison.md)を参照する。
+UIはTailwind CSS 4・shadcn-svelteのCard・Table部品、アイコンはLucideを採用した。ダークなカードの見た目を共通のテーマで調整する。候補の比較と採用理由は[ui-library-comparison.md](ui-library-comparison.md)を参照する。
 
 `apps/web`にSvelte・TypeScript・Viteを導入済み。ローカルの開発サーバーまたはComposeの`web`サービスで起動し、最新の保存済み取引日の騰落率を自動取得して表示する。
 
