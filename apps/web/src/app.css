@@ -117,11 +117,16 @@
 }
 
 @layer base {
+  #app {
+    width: 100%;
+    min-width: 0;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply min-w-80 bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
   }
   html {
     @apply font-sans;
