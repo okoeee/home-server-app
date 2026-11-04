@@ -1,7 +1,7 @@
 # ADR：ラズパイ本体のメトリクス取得
 
 - 日付：2026-11-03
-- 状態：採用方針を決定。未実装
+- 状態：採用。Compose設定を追加済み。ラズパイ実機での取得確認は未実施
 
 ## 背景
 
@@ -45,12 +45,14 @@ Node Exporter自体は履歴を保存しない。CPUの稼働時間は累積値�
 
 Linux上のNode Exporterは、主に`/proc`のCPU・メモリ情報と、`/sys`の温度センサー情報を利用する。コンテナ化する場合は、コンテナ自身と本体の情報を混同しないようにする。
 
-実装時は[公式のDocker構成](https://github.com/prometheus/node_exporter#docker)を基に、次を設定する。
+`compose.yaml`の`node_exporter`サービスで、[公式のDocker構成](https://github.com/prometheus/node_exporter#docker)を基に次を設定する。
 
 - ホストのルートを`/host`へ読み取り専用でbind mountし、`--path.rootfs=/host`を指定する。
 - `network_mode: host`と`pid: host`を利用し、ホストの名前空間を参照する。
 - ホスト参照の設定はNode Exporterに限定し、Go APIのコンテナへ追加しない。
 - ホストの情報を広く参照するため、イメージはバージョンを固定する。`privileged`やDockerソケットのマウントは追加しない。
+
+イメージは`quay.io/prometheus/node-exporter:v1.12.1`を使用する。[採用バージョンのリリース](https://github.com/prometheus/node_exporter/releases/tag/v1.12.1)
 
 最初は`--web.listen-address=127.0.0.1:9100`でラズパイ自身からのみ接続可能にする。SSHでラズパイへ接続して`http://127.0.0.1:9100/metrics`を確認し、Caddyやブラウザへの公開は行わない。Prometheus導入時にコンテナ間の接続方法と待ち受け先を決める。
 
@@ -69,4 +71,33 @@ Linux上のNode Exporterは、主に`/proc`のCPU・メモリ情報と、`/sys`�
 
 MacのDocker DesktopはLinux VM上でコンテナを動かす。そのため、そこで参照できる情報をMac本体やラズパイの情報として扱わず、温度を含む受け入れ確認はラズパイ実機で行う。[Docker Desktopの実行環境](https://docs.docker.com/desktop/features/vmm/)
 
-この段階ではPrometheus・Go API・OpenAPI・画面・アラートを追加しない。起動手順は実装時に整備する。
+この段階ではPrometheus・Go API・OpenAPI・画面・アラートを追加しない。
+
+## 実機での確認手順
+
+ラズパイへSSHで接続し、プロジェクトルートで[READMEの手順](../README.md#ラズパイ本体のメトリクス取得)に従って起動する。以降もラズパイ上で実行する。
+
+```bash
+curl --fail --silent --show-error http://127.0.0.1:9100/metrics \
+  | grep -E '^(node_cpu_seconds_total|node_memory_(MemTotal|MemAvailable)_bytes|node_hwmon_(temp_celsius|chip_names|sensor_label)|node_thermal_zone_temp|node_scrape_collector_success)'
+```
+
+| メトリクス | 確認する内容 |
+| --- | --- |
+| `node_cpu_seconds_total` | CPU・動作モードごとの累積秒数。CPU使用率そのものではない |
+| `node_memory_MemTotal_bytes` | メモリ総量（バイト） |
+| `node_memory_MemAvailable_bytes` | 利用可能なメモリ量（バイト） |
+| `node_hwmon_temp_celsius` / `node_thermal_zone_temp` | 温度（℃）。公開される系列とセンサーのラベルは実機で確認する |
+| `node_scrape_collector_success` | 対象collectorの収集成否。成功は1、失敗は0 |
+
+OS側の値は次のように確認する。
+
+```bash
+head -n 5 /proc/stat
+grep -E '^(MemTotal|MemAvailable):' /proc/meminfo
+grep -H . /sys/class/thermal/thermal_zone*/type /sys/class/thermal/thermal_zone*/temp
+```
+
+CPUは`/proc/stat`のクロック刻みを秒へ変換した値として、メモリは`/proc/meminfo`のkB表記を1024倍したバイトとして比較する。`/sys/class/thermal`の温度はミリ℃表記なので、1000で割って比較する。取得時刻の差で値が動くことも考慮する。
+
+温度系列がない場合は、Node ExporterのログとOS側のセンサー公開状況を確認する。複数センサーがある場合は種類・ラベルを調べ、CPU温度に対応する系列を特定する。

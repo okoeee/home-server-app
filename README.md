@@ -74,6 +74,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── architecture-decisions.md
 │   ├── home-dashboard.md
 │   ├── naming-conventions.md
+│   ├── server-metrics-adr.md
 │   ├── stock-price-design.md
 │   ├── testing-policy.md
 │   ├── ui-library-comparison.md
@@ -158,6 +159,26 @@ curl http://localhost:3000/api/ping
 `{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
 
 DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。APIはMySQLのヘルスチェック成功後に起動します。`web`はAPIの起動後に開始しますが、APIの準備完了までは待ちません。
+
+## ラズパイ本体のメトリクス取得
+
+ラズパイにSSHで接続し、プロジェクトルートで実行します。
+
+```bash
+docker compose --profile monitoring up -d node_exporter
+curl --fail --silent --show-error http://127.0.0.1:9100/metrics
+```
+
+Node Exporterのみを起動します。`monitoring`プロファイルに分けているため、通常の`make`や`docker compose up -d`では起動しません。待ち受けはラズパイ自身の`127.0.0.1:9100`に限定しています。MacのDocker Desktopは本体ではなくLinux VMの情報になるため、取得値はラズパイ実機で確認します。
+
+ログの確認と停止は次のコマンドで行います。
+
+```bash
+docker compose logs --tail 50 node_exporter
+docker compose --profile monitoring stop node_exporter
+```
+
+取得項目と実機での確認方法は[メトリクス取得のADR](documents/server-metrics-adr.md#実機での確認手順)を参照してください。
 
 ## OpenAPIとGo・TypeScriptモデルの生成
 
