@@ -149,7 +149,7 @@ CloudFrontは配信元の手前でキャッシュ・配信するCDN。今回は�
 
 ## サーバーのメトリクス取得
 
-ラズパイ本体のCPU・メモリ・温度を取得するため、Node ExporterをComposeの`monitoring`プロファイルで管理する。Compose設定を追加済みで、ラズパイ実機での取得確認は未実施。Prometheus・Go API・画面は後続で追加する。比較と採用理由は[server-metrics-adr.md](server-metrics-adr.md)を参照する。
+ラズパイ本体のCPU・メモリ・温度を取得するため、Node ExporterとPrometheusをComposeの`monitoring`プロファイルで管理する。両サービスはホストのネットワークを共有し、ラズパイ自身から接続する。15秒ごとに収集し、専用ボリュームで7日を目安に保持する。Prometheusによる実機の収集確認は未実施。Go API・画面は後続で追加する。比較と採用理由は[server-metrics-adr.md](server-metrics-adr.md)を参照する。
 
 ## 開発時の方針
 

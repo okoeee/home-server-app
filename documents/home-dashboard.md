@@ -32,7 +32,7 @@ PCではカードを並べ、スマートフォンでは縦に配置する。最
 
 天気の取得元とキャッシュの設計は[weather-design.md](weather-design.md)を参照する。
 
-サーバー情報はNode Exporterから取得する。Compose設定を追加済みで、ラズパイ実機での取得確認は未実施。選定理由と導入範囲は[server-metrics-adr.md](server-metrics-adr.md)を参照する。Prometheus・API・画面は後続で追加する。
+サーバー情報はNode Exporterから取得し、Prometheusで定期収集・保存する。両サービスの設定を追加済みで、Prometheusによるラズパイ実機の収集確認は未実施。選定理由と導入範囲は[server-metrics-adr.md](server-metrics-adr.md)を参照する。API・画面は後続で追加する。
 
 - 現在のSvelte・Go API・MySQLの構成を継続する。
 - 外部サービスの認証情報はGo側で管理する。
