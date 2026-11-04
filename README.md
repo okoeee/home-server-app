@@ -9,6 +9,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 ## 必要な環境
 
 - Git
+- Bash（`scripts/`内のスクリプト実行用）
 - Make
 - Go 1.27.1
 - Node.js（フロント開発用。Viteの要件は20.19以上の20系、または22.12以上）
@@ -60,6 +61,9 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │       └── init/
 │   │           ├── table_schema.sql
 │   │           └── table_seed.sql
+│   ├── monitoring/
+│   │   └── prometheus/
+│   │       └── prometheus.yaml
 │   └── web/
 │       ├── .dockerignore
 │       ├── Caddyfile
@@ -74,6 +78,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── architecture-decisions.md
 │   ├── home-dashboard.md
 │   ├── naming-conventions.md
+│   ├── server-metrics-adr.md
 │   ├── stock-price-design.md
 │   ├── testing-policy.md
 │   ├── ui-library-comparison.md
@@ -158,6 +163,30 @@ curl http://localhost:3000/api/ping
 `{"message":"pong"}`が返れば成功です。フロントだけを停止する場合は`docker compose stop web`を実行します。
 
 DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。APIはMySQLのヘルスチェック成功後に起動します。`web`はAPIの起動後に開始しますが、APIの準備完了までは待ちません。
+
+## ラズパイ本体のメトリクス取得
+
+ラズパイにSSHで接続し、プロジェクトルートで実行します。
+
+```bash
+docker compose --profile monitoring up -d prometheus
+curl --fail --silent --show-error http://127.0.0.1:9090/-/ready
+```
+
+Prometheusと依存先のNode Exporterを起動します。起動直後の準備が完了していなければ、少し待って確認コマンドを再実行します。`monitoring`プロファイルに分けているため、通常の`make`や`docker compose up -d`では起動しません。
+
+待ち受けはラズパイ自身の`127.0.0.1:9090`（Prometheus）と`127.0.0.1:9100`（Node Exporter）に限定しています。MacのDocker Desktopは本体ではなくLinux VMの情報になるため、取得値はラズパイ実機で確認します。
+
+Prometheusは15秒ごとに収集し、専用ボリューム`prometheus-data`へ7日を目安に保存します。設定ファイルは`apps/monitoring/prometheus/prometheus.yaml`です。設定を変更した場合は`docker compose --profile monitoring restart prometheus`で再読み込みします。
+
+ログの確認と停止は次のコマンドで行います。
+
+```bash
+docker compose logs --tail 50 prometheus node_exporter
+docker compose --profile monitoring stop prometheus node_exporter
+```
+
+収集状態・使用率の確認方法と、PCから管理画面を開く手順は[メトリクス取得のADR](documents/server-metrics-adr.md#prometheusでの確認手順)を参照してください。
 
 ## OpenAPIとGo・TypeScriptモデルの生成
 
