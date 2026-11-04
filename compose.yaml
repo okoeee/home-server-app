@@ -71,6 +71,44 @@ services:
     profiles:
       - monitoring
 
+  import_stocks:
+    image: golang:1.27.1-bookworm
+    working_dir: /app
+    volumes:
+      - ./apps/api:/app:ro
+    environment:
+      JQUANTS_API_KEY: ${JQUANTS_API_KEY}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+    entrypoint: ["go", "run", "./cmd/importstocks"]
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - tools
+
+  import_daily_prices:
+    image: golang:1.27.1-bookworm
+    working_dir: /app
+    volumes:
+      - ./apps/api:/app:ro
+    environment:
+      JQUANTS_API_KEY: ${JQUANTS_API_KEY}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+    entrypoint: ["go", "run", "./cmd/importdailyprices"]
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - tools
+
   backfill_daily_prices:
     image: golang:1.27.1-bookworm
     working_dir: /app
