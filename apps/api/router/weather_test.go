@@ -6,8 +6,10 @@ import (
 	openmeteomodel "api/external/openmeteo/model"
 	"api/handler"
 	"api/usecase/weather"
+	"bytes"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -92,14 +94,19 @@ func TestGetForecast_ReturnsCachedForecast(t *testing.T) {
 
 func TestGetForecast_UpstreamErrorsReturnBadGateway(t *testing.T) {
 	for _, test := range []struct {
-		name string
-		err  error
+		name    string
+		err     error
+		wantLog string
 	}{
-		{"FetchFailure", errors.New("private upstream details")},
-		{"InvalidForecast", nil},
+		{"FetchFailure", errors.New("private upstream details"), "private upstream details"},
+		{"InvalidForecast", nil, "daily forecast arrays must contain 5 entries each"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			// Arrange
+			var logs bytes.Buffer
+			originalWriter := log.Writer()
+			log.SetOutput(&logs)
+			t.Cleanup(func() { log.SetOutput(originalWriter) })
 			clock := func() time.Time { return time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC) }
 			fetcher := &forecastFetcherStub{err: test.err}
 			reader := openmeteo.NewForecastReader(fetcher, clock)
@@ -111,6 +118,9 @@ func TestGetForecast_UpstreamErrorsReturnBadGateway(t *testing.T) {
 
 			// Assert
 			assertJSONResponse(t, recorder, http.StatusBadGateway, `{"message":"天気予報を取得できませんでした"}`)
+			if !strings.Contains(logs.String(), "get weather forecast:") || !strings.Contains(logs.String(), test.wantLog) {
+				t.Errorf("logs = %q, want forecast error including %q", logs.String(), test.wantLog)
+			}
 		})
 	}
 }

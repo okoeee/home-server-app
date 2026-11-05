@@ -6,6 +6,7 @@ import (
 	"api/usecase/weather"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -27,6 +28,7 @@ func NewWeatherHandler(getter WeatherForecastGetter) *WeatherHandler {
 func (handler *WeatherHandler) GetForecast(c *gin.Context) {
 	forecast, err := handler.getter.Get(c.Request.Context())
 	if err != nil {
+		log.Printf("get weather forecast: %v", err)
 		status := http.StatusInternalServerError
 		if errors.Is(err, weather.ErrForecastUnavailable) {
 			status = http.StatusBadGateway
