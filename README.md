@@ -74,6 +74,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │       ├── src/
 │       │   └── api/generated/schema.d.ts
 │       └── vite.config.ts
+├── cron/
+│   └── import_daily_prices.cron
 ├── documents/
 │   ├── architecture-decisions.md
 │   ├── home-dashboard.md
@@ -96,6 +98,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── backfill_daily_prices.sh
 │   ├── deploy.sh
 │   ├── import_daily_prices.sh
+│   ├── import_yesterday_daily_prices.sh
 │   └── import_stocks.sh
 ├── compose.yaml
 ├── Makefile
@@ -244,6 +247,40 @@ J-Quantsから銘柄マスターを取得し、`stocks`へ保存します。
 ```
 
 指定日は`YYYY-MM-DD`形式で入力します。J-Quantsから取得した株価日足を`daily_prices`へUPSERTし、保存件数をログへ出力します。保存処理は1つのトランザクションで実行します。
+
+### 日足の自動取り込み（ラズパイのみ）
+
+毎日、日本時間の朝7時に前日分を取得します。土日・祝日も実行し、正常なAPI応答が0件なら正常終了して既存データを保持します。通信・認証・保存などの失敗はエラーとして記録します。
+
+ラズパイ上で、OSのタイムゾーンが`Asia/Tokyo`、cronが`active`であることを確認します。以下の登録・実行は、普段Dockerを実行している`kazuma`ユーザーで行います。
+
+```bash
+timedatectl show --property=Timezone --value
+systemctl is-active cron
+```
+
+OSのタイムゾーンが異なる場合は`sudo timedatectl set-timezone Asia/Tokyo`で変更し、`sudo systemctl restart cron`でcronへ反映します。cronが停止している場合は`sudo systemctl enable --now cron`で起動します。cronの実行時刻はOSのタイムゾーンに従い、スクリプト内の`TZ=Asia/Tokyo`だけでは変更されません。
+
+プロジェクトルートでログ保存先を作り、設定ファイルを表示します。
+
+```bash
+mkdir -p logs
+cat cron/import_daily_prices.cron
+crontab -e
+```
+
+表示されたcron設定を、既存の登録を残して追記します。設定の`/home/kazuma/docker/home-server-app`はラズパイの配置先に合わせてください。`0 7 * * *`は毎日7:00、`cd`は実行ディレクトリの指定、`PATH`はDockerなどの検索先、`>>`はログへの追記、`2>&1`はエラー出力も同じログへ送る指定です。
+
+登録と実行結果は次で確認します。
+
+```bash
+crontab -l
+tail -n 50 logs/import_daily_prices.log
+```
+
+ログは初回実行時に作られます。手動確認は、プロジェクトルートで`./scripts/import_yesterday_daily_prices.sh`を実行します。このスクリプトはラズパイのGNU dateを使って日本時間の前日を求め、既存の日付指定スクリプトを呼び出します。Dockerには`-T`を指定し、端末のないcronからも実行できるようにしています。
+
+Gitへの追加やpullだけではcronへ登録されません。開発端末では登録不要です。停止したい場合は`crontab -e`で該当行を削除します。ラズパイ停止中の実行や失敗分は自動補完しないため、必要な日付を指定して手動で再実行します。
 
 ### 過去の株価日足の取得と保存
 

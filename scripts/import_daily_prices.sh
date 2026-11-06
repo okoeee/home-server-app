@@ -7,4 +7,4 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-docker compose run --rm import_daily_prices "$1"
+docker compose run --rm -T import_daily_prices "$1"

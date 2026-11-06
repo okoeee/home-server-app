@@ -4,6 +4,7 @@
 *.key
 secrets/
 data/
+/logs/
 
 .idea
 .codex

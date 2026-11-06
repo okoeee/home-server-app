@@ -96,28 +96,28 @@ J-Quantsの調整済み値は、後日の株式分割などを受けて過去分
 
 ```text
 初回取得: 過去60営業日程度
-日次取得: 当日の1営業日分
+日次取得: 日本時間の前日1日分（毎朝7時に実行）
 ```
 
 60営業日は、欠損への対応と将来の指標追加に備えた初期値とする。
 
 ### 初回取得と日次取得
 
-初回取得と日次取得で別々の取得処理は作らず、同じプログラムへ対象期間を渡して実行する。
+期間取得は`backfilldailyprices`、日付指定の取得は`importdailyprices`で実行し、同じ日足取得クライアントとRepositoryを使用する。
 
 ```text
 初回取得: 開始日から終了日までを指定する。
-日次取得: 1営業日を指定する。
+日次取得: 日本時間の前日を指定する。休場日の判定は行わない。
 ```
 
-実行イメージは次のとおりとする。
+実行コマンドは次のとおりとする。
 
 ```bash
-import-prices --from 2026-07-01 --to 2026-10-14
-import-prices --date 2026-10-14
+./scripts/backfill_daily_prices.sh 2026-07-01 2026-10-14
+./scripts/import_daily_prices.sh 2026-10-14
 ```
 
-取得プログラムは`apps/api/cmd/import-prices`への配置を想定する。
+取得プログラムは`apps/api/cmd/backfilldailyprices`と`apps/api/cmd/importdailyprices`に置く。
 
 バージョン1の初回取得は過去60営業日程度とする。52週高値や6カ月・12カ月モメンタムを追加するときに、必要な過去期間を延ばす。
 
@@ -125,24 +125,17 @@ import-prices --date 2026-10-14
 
 ## 更新タイミング
 
-J-Quantsの公式情報では、株価四本値は日次で16:30 JST、上場銘柄情報は日次で17:30 JSTに更新される。
-
-- [株価四本値](https://pro.jpx-jquants.com/datasets/9)
-- [上場銘柄情報](https://pro.jpx-jquants.com/datasets/4)
+J-Quantsの[公式の更新タイミング](https://jpx-jquants.com/ja/spec/data-update)では、株価四本値は日次で16:30頃、上場銘柄情報は17:30頃と翌営業日8:00頃に更新される。これらは目安であり、完了時刻を保証するものではない。
 
 契約プランによって提供の遅延が異なるため、当日データを取得できるプランを前提とする。
 
-自宅サーバーでは営業日の18:00 JST以降に次の順序で実行する。
+日足はラズパイのcronから毎日7:00 JSTに前日分を取得する。例えば土曜朝には金曜分を取得し、日曜・月曜朝の対象日は通常休場日となる。休日判定は追加せず、正常応答が0件なら既存データを変更せず正常終了する。0件という結果だけで休場日だったと断定はしない。通信・認証・保存などの失敗はエラーとして扱う。
 
-```text
-1. 銘柄マスターを取得する。
-2. 当日の日足を取得する。
-3. 取得した日付と件数を確認する。
-4. 注目度を計算する。
-5. 上位10銘柄を保存して公開する。
-```
+cron設定は`cron/import_daily_prices.cron`、前日を求める処理は`scripts/import_yesterday_daily_prices.sh`に置く。登録先はラズパイのユーザーcrontabのみとし、Gitへの追加や通常のCompose起動では登録しない。OSのタイムゾーンを`Asia/Tokyo`にして使用する。登録方法は[README](../README.md#日足の自動取り込みラズパイのみ)を参照する。
 
-非営業日は処理しない。取得した最新日が期待する取引日と一致しない場合も、その日のランキングを作成しない。
+[Debianのcron](https://manpages.debian.org/trixie/cron/crontab.5.en.html)では実行時刻がOSのタイムゾーンに従うため、cron内の`TZ`指定だけでは実行時刻を日本時間にできない。対象日の計算には[GNU date](https://manpages.debian.org/trixie/coreutils/date.1.en.html)の`--date=yesterday`を使い、そのコマンドに`TZ=Asia/Tokyo`を明示する。
+
+今回の定期実行は日足の取得・保存までとする。銘柄マスターの定期更新や、注目度の計算・ランキング保存は含めない。
 
 ## 上場廃止銘柄
 
