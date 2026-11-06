@@ -76,7 +76,9 @@ Lucide・Tablerは公式に個別利用とtree shakingを案内している。�
 
 今回のUI部品はCardとTable。CLIのVegaプリセットを基に、`src/lib/components/ui/card/`と`table/`へ公式の部品を追加し、`src/app.css`のダーク用トークンを調整した。生成時に追加された未使用のアニメーション・バリアント依存は外した。Interフォントはnpmパッケージからローカル配信する。テーマ切り替えは実装せず、`index.html`の`dark`クラスで固定する。
 
-共通UIは`src/lib/components/ui/`、既存の機能別コンポーネントは`src/components/`で管理する。天気は`WeatherForecastCard.svelte`、株価は`DailyPriceChangeCard.svelte`が見出し・表示状態・内容を担当し、`App.svelte`は取得と配置を担当する。株価の表はカード内の`DailyPriceChangeTable.svelte`に分ける。追加したUIコードと`components.json`はGit管理し、上流のライセンスは`src/lib/components/ui/LICENSE.md`に保持する。
+共通UIは`src/lib/components/ui/`、機能別コンポーネントは`src/components/`で管理する。`DashboardCard.svelte`がカードの枠・見出し・説明・本文・任意のフッターを共通化し、天気と株価から利用する。Cardの`size="sm"`で左右の余白を16pxにそろえ、見出しアイコンは16px・線幅1.6、見出しと説明の文字サイズも共通にする。日別の天気アイコンは内容を表す24pxのままとする。
+
+天気は`WeatherForecastCard.svelte`、株価は`DailyPriceChangeCard.svelte`が表示するデータと読み込み・エラー状態を担当し、`App.svelte`は取得と配置を担当する。株価の表はカード内の`DailyPriceChangeTable.svelte`に分ける。追加したUIコードと`components.json`はGit管理し、上流のライセンスは`src/lib/components/ui/LICENSE.md`に保持する。
 
 1. アイコンを先に追加し、既存の天気カードで確認する。UIキットとは分けてコミットできる。
 2. `WeatherCondition`からアイコンへの対応はフロントに置く。16種類すべてを網羅し、`unknown`には不明を表すアイコンを使う。霧雨・着氷性の雨などで絵柄を共有しても、日本語名は残す。
