@@ -165,6 +165,8 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 取得・検証で失敗した元のエラーは、Handlerで`get weather forecast:`を付けて標準ログへ出力する。`docker compose logs --tail 100 api`で、タイムアウト・DNS・TLS・外部HTTPステータス・データ検証のどこで失敗したかを確認する。Caddy経由で502になった場合は、ラズパイ上の`http://127.0.0.1:8080/v1/weather/forecast`へ直接アクセスし、API自身の502かCaddyの転送失敗かを切り分ける。
 
+ホストのDNS障害と天気APIの502について、確認できた原因・復旧した対処・未解明の点は[トラブルシューティング](troubleshooting/weather-api-dns.md)を参照する。
+
 この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。取得・変換・検証・キャッシュをHandlerとルートに接続し、ホームの天気カードから呼び出す。
 
 ## フロントの表示

@@ -81,6 +81,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── server-metrics-adr.md
 │   ├── stock-price-design.md
 │   ├── testing-policy.md
+│   ├── troubleshooting/
+│   │   └── weather-api-dns.md
 │   ├── ui-library-comparison.md
 │   └── weather-design.md
 ├── openapi/
