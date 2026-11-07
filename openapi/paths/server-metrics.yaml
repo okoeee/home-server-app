@@ -2,14 +2,13 @@ get:
   operationId: getServerMetrics
   summary: ラズパイ本体の現在のメトリクスを取得する
   description: |
-    ラズパイ1台を対象に、Prometheusで収集したCPU・メモリ使用率とCPU温度を返す。
+    ラズパイ1台を対象に、Prometheusで収集したCPU・メモリ使用率を返す。
     CPU使用率は直近1分の全コア平均。コンテナ単位の使用率や履歴は返さない。
     パラメーターは不要。リクエストごとにPrometheusへ問い合わせ、Go側ではキャッシュしない。
-    CPU温度を取得できない場合はnullを返す。欠損した値を0で補完しない。
-    この定義は実装予定の仕様であり、ルートと取得処理は後続で追加する。
+    欠損した値を0で補完しない。
   responses:
     '200':
-      description: CPU・メモリ使用率を取得できた。CPU温度は取得できない場合がある。
+      description: CPU・メモリ使用率を取得できた。
       content:
         application/json:
           schema:

@@ -116,11 +116,10 @@ export interface paths {
         };
         /**
          * ラズパイ本体の現在のメトリクスを取得する
-         * @description ラズパイ1台を対象に、Prometheusで収集したCPU・メモリ使用率とCPU温度を返す。
+         * @description ラズパイ1台を対象に、Prometheusで収集したCPU・メモリ使用率を返す。
          *     CPU使用率は直近1分の全コア平均。コンテナ単位の使用率や履歴は返さない。
          *     パラメーターは不要。リクエストごとにPrometheusへ問い合わせ、Go側ではキャッシュしない。
-         *     CPU温度を取得できない場合はnullを返す。欠損した値を0で補完しない。
-         *     この定義は実装予定の仕様であり、ルートと取得処理は後続で追加する。
+         *     欠損した値を0で補完しない。
          */
         get: operations["getServerMetrics"];
         put?: never;
@@ -251,7 +250,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Prometheusへ問い合わせた基準日時。RFC 3339形式でオフセットを含む。
-             *     センサーが計測した時刻ではない。各クエリはこの日時を共通の評価時刻にする。
+             *     元データの収集時刻ではない。各クエリはこの日時を共通の評価時刻にする。
              * @example 2026-11-07T09:00:00+09:00
              */
             fetched_at: string;
@@ -267,12 +266,6 @@ export interface components {
              * @example 43.2
              */
             memory_usage_percent: number;
-            /**
-             * Format: double
-             * @description CPU温度（℃）。CPUセンサーを特定できない、値が欠損・古い場合はnull。キーは常に返す。
-             * @example 48.7
-             */
-            cpu_temperature_celsius: number | null;
         };
     };
     responses: {
@@ -466,7 +459,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description CPU・メモリ使用率を取得できた。CPU温度は取得できない場合がある。 */
+            /** @description CPU・メモリ使用率を取得できた。 */
             200: {
                 headers: {
                     [name: string]: unknown;
