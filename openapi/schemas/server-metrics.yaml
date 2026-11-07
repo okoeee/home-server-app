@@ -1,0 +1,31 @@
+ServerMetricsResponse:
+  type: object
+  required: [fetched_at, cpu_usage_percent, memory_usage_percent, cpu_temperature_celsius]
+  properties:
+    fetched_at:
+      type: string
+      format: date-time
+      description: |
+        Prometheusへ問い合わせた基準日時。RFC 3339形式でオフセットを含む。
+        センサーが計測した時刻ではない。各クエリはこの日時を共通の評価時刻にする。
+      example: '2026-11-07T09:00:00+09:00'
+    cpu_usage_percent:
+      type: number
+      format: double
+      minimum: 0
+      maximum: 100
+      description: 直近1分の全CPUコアの平均使用率（%）。アイドル時間の割合を100%から引く。
+      example: 12.5
+    memory_usage_percent:
+      type: number
+      format: double
+      minimum: 0
+      maximum: 100
+      description: 本体のメモリ使用率（%）。総量に対する利用可能量（MemAvailable）の割合を100%から引く。
+      example: 43.2
+    cpu_temperature_celsius:
+      type: number
+      format: double
+      nullable: true
+      description: CPU温度（℃）。CPUセンサーを特定できない、値が欠損・古い場合はnull。キーは常に返す。
+      example: 48.7
