@@ -107,6 +107,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/server/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ラズパイ本体の現在のメトリクスを取得する
+         * @description ラズパイ1台を対象に、Prometheusで収集したCPU・メモリ使用率とCPU温度を返す。
+         *     CPU使用率は直近1分の全コア平均。コンテナ単位の使用率や履歴は返さない。
+         *     パラメーターは不要。リクエストごとにPrometheusへ問い合わせ、Go側ではキャッシュしない。
+         *     CPU温度を取得できない場合はnullを返す。欠損した値を0で補完しない。
+         *     この定義は実装予定の仕様であり、ルートと取得処理は後続で追加する。
+         */
+        get: operations["getServerMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -223,6 +247,33 @@ export interface components {
             /** @description Asia/Tokyoの今日から連続する5日分。日付の昇順で返す。 */
             forecasts: components["schemas"]["DailyWeatherForecastResponse"][];
         };
+        ServerMetricsResponse: {
+            /**
+             * Format: date-time
+             * @description Prometheusへ問い合わせた基準日時。RFC 3339形式でオフセットを含む。
+             *     センサーが計測した時刻ではない。各クエリはこの日時を共通の評価時刻にする。
+             * @example 2026-11-07T09:00:00+09:00
+             */
+            fetched_at: string;
+            /**
+             * Format: double
+             * @description 直近1分の全CPUコアの平均使用率（%）。アイドル時間の割合を100%から引く。
+             * @example 12.5
+             */
+            cpu_usage_percent: number;
+            /**
+             * Format: double
+             * @description 本体のメモリ使用率（%）。総量に対する利用可能量（MemAvailable）の割合を100%から引く。
+             * @example 43.2
+             */
+            memory_usage_percent: number;
+            /**
+             * Format: double
+             * @description CPU温度（℃）。CPUセンサーを特定できない、値が欠損・古い場合はnull。キーは常に返す。
+             * @example 48.7
+             */
+            cpu_temperature_celsius: number | null;
+        };
     };
     responses: {
         /** @description データ取得または計算に失敗した。 */
@@ -251,6 +302,7 @@ export type DailyVolumeRatioResponse = components['schemas']['DailyVolumeRatioRe
 export type WeatherCondition = components['schemas']['WeatherCondition'];
 export type DailyWeatherForecastResponse = components['schemas']['DailyWeatherForecastResponse'];
 export type WeatherForecastResponse = components['schemas']['WeatherForecastResponse'];
+export type ServerMetricsResponse = components['schemas']['ServerMetricsResponse'];
 export type ResponseInternalServerError = components['responses']['InternalServerError'];
 export type $defs = Record<string, never>;
 export interface operations {
@@ -398,6 +450,68 @@ export interface operations {
                     /**
                      * @example {
                      *       "message": "天気予報を取得できませんでした"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getServerMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CPU・メモリ使用率を取得できた。CPU温度は取得できない場合がある。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerMetricsResponse"];
+                };
+            };
+            /** @description 予期しない内部エラー。内部エラーの詳細は公開しない。 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "サーバーのメトリクスを取得できませんでした"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Prometheusへの通信失敗・タイムアウト・クエリエラー、または不正な応答。 */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "サーバーのメトリクスを取得できませんでした"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Node Exporterの収集失敗・停止、1分を超える古い必須データ、またはCPU・メモリのデータ不足。 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "サーバーのメトリクスを取得できませんでした"
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
