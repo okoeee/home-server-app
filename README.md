@@ -38,7 +38,8 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   │   │   └── repository/
 │   │   ├── external/
 │   │   │   ├── jquants/
-│   │   │   └── openmeteo/
+│   │   │   ├── openmeteo/
+│   │   │   └── prometheus/
 │   │   ├── go.mod
 │   │   ├── go.sum
 │   │   ├── handler/
@@ -180,7 +181,17 @@ curl --fail --silent --show-error http://127.0.0.1:9090/-/ready
 
 Prometheusと依存先のNode Exporterを起動します。起動直後の準備が完了していなければ、少し待って確認コマンドを再実行します。`monitoring`プロファイルに分けているため、通常の`make`や`docker compose up -d`では起動しません。
 
-待ち受けはラズパイ自身の`127.0.0.1:9090`（Prometheus）と`127.0.0.1:9100`（Node Exporter）に限定しています。MacのDocker Desktopは本体ではなくLinux VMの情報になるため、取得値はラズパイ実機で確認します。
+ホストへのポート公開はラズパイ自身の`127.0.0.1:9090`（Prometheus）と`127.0.0.1:9100`（Node Exporter）に限定しています。コンテナ間はComposeのサービス名で接続し、APIの接続先はCompose内で`PROMETHEUS_URL=http://prometheus:9090`に設定しています。Goを直接起動する場合の既定値は`http://localhost:9090`です。
+
+監視構成はLinuxのラズパイ用です。MacのDocker Desktopでは参照先やマウント仕様が異なるため、そのままの構成で実機の検証はできません。通常のMac開発では`monitoring`を起動する必要はありません。
+
+今回のネットワーク変更を既存環境へ反映する場合は、プロジェクトルートで次を実行します。
+
+```bash
+docker compose --profile monitoring up -d --build api prometheus
+```
+
+依存するNode Exporterも再作成されます。保存済みの履歴は保持しますが、収集先ラベルが変わるため、新しいCPUデータがたまるまで1分程度待ちます。監視サービスを起動していない場合も、株価・天気のAPIは引き続き利用できます。
 
 Prometheusは15秒ごとに収集し、専用ボリューム`prometheus-data`へ7日を目安に保存します。設定ファイルは`apps/monitoring/prometheus/prometheus.yaml`です。設定を変更した場合は`docker compose --profile monitoring restart prometheus`で再読み込みします。
 
