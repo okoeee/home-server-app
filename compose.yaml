@@ -18,6 +18,7 @@ services:
       DB_NAME: ${MYSQL_DATABASE}
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
+      PROMETHEUS_URL: http://prometheus:9090
     ports:
       - "8080:8080"
     depends_on:
@@ -45,8 +46,11 @@ services:
     image: quay.io/prometheus/node-exporter:v1.12.1
     command:
       - --path.rootfs=/host
-      - --web.listen-address=127.0.0.1:9100
-    network_mode: host
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --web.listen-address=:9100
+    ports:
+      - "127.0.0.1:9100:9100"
     pid: host
     restart: unless-stopped
     volumes:
@@ -60,8 +64,9 @@ services:
       - --config.file=/etc/prometheus/prometheus.yaml
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=7d
-      - --web.listen-address=127.0.0.1:9090
-    network_mode: host
+      - --web.listen-address=:9090
+    ports:
+      - "127.0.0.1:9090:9090"
     restart: unless-stopped
     volumes:
       - ./apps/monitoring/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
