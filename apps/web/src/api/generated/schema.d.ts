@@ -496,7 +496,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Node Exporterの収集失敗・停止、1分を超える古い必須データ、またはCPU・メモリのデータ不足。 */
+            /** @description Node Exporterの収集失敗・停止、またはCPU・メモリのデータ不足。 */
             503: {
                 headers: {
                     [name: string]: unknown;
