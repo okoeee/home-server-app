@@ -165,6 +165,10 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 取得・検証で失敗した元のエラーは、Handlerで`get weather forecast:`を付けて標準ログへ出力する。`docker compose logs --tail 100 api`で、タイムアウト・DNS・TLS・外部HTTPステータス・データ検証のどこで失敗したかを確認する。Caddy経由で502になった場合は、ラズパイ上の`http://127.0.0.1:8080/v1/weather/forecast`へ直接アクセスし、API自身の502かCaddyの転送失敗かを切り分ける。
 
+Open-Meteoへの通信・HTTPステータス・JSON解析の失敗には、`network_trace`を付ける。Go標準の[httptrace](https://pkg.go.dev/net/http/httptrace#ClientTrace)でDNS、TCP接続、TLS、接続の再利用、リクエスト送信、応答の最初の1バイトを計測し、ヘッダー受信と本文読み取り開始も記録する。`@123ms`は取得開始からそのイベントまでの経過時間、`total`は失敗を記録した時点までの経過時間。並行する接続試行は接続先アドレスで区別し、時間を合算しない。再利用した接続ではDNS・TCP・TLSのイベントが出ない場合がある。
+
+この情報は失敗時の内部ログにだけ含め、成功時のログやAPIレスポンスには追加しない。読み方は[リリース後の502の調査手順](troubleshooting/api-502-after-deploy.md#通信区間のログを読む)を参照する。計測を追加しても10秒のタイムアウトやキャッシュの挙動は変更しない。
+
 ホストのDNS障害と天気APIの502について、確認できた原因・復旧した対処・未解明の点は[トラブルシューティング](troubleshooting/weather-api-dns.md)を参照する。
 
 この契約は`openapi/paths/weather-forecast.yaml`と`openapi/schemas/weather-forecast.yaml`に定義し、Go・TypeScriptのレスポンスモデルを生成する。取得・変換・検証・キャッシュをHandlerとルートに接続し、ホームの天気カードから呼び出す。
@@ -173,7 +177,7 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 
 - `src/api/weather-forecast.ts`で`/api/v1/weather/forecast`を呼び出し、生成済みの`WeatherForecastResponse`を利用する。
 - `src/models/weather-forecast.ts`で16種類の天気enumと日本語表示名を対応付ける。
-- `src/components/WeatherForecastCard.svelte`は取得結果と読み込み・エラー状態を受け取り、5日分を表示する。カードの最大幅を448pxとし、5日分を横並びでコンパクトに表示する。
+- `src/components/WeatherForecastCard.svelte`は取得結果と読み込み・エラー状態を受け取り、5日分を横並びでコンパクトに表示する。カードの幅は親のグリッドに合わせる。
 - `App.svelte`のマウント時に1回取得する。取得結果は画面の表示用に保持し、共有ストアやブラウザ側キャッシュは追加しない。
 - 天気と騰落率を独立して取得し、片方の失敗で他方の表示を妨げない。
 - 天気の対象日は`10/31（土）`のように曜日付きで表示する。`src/models/weather-forecast.ts`でAPIの暦日からUTCの日時を作り、曜日の整形もUTCに固定して端末のタイムゾーンによる日付のずれを防ぐ。取得日時は日本時間に整形する。気温・湿度のnullは「—」、0は数値として表示する。
@@ -192,7 +196,7 @@ DBが不適切という判断ではなく、現在の要件では必要ないと
 - 通信失敗・200以外のHTTPステータス・JSONの解析失敗はエラーとして返す。レスポンス本文は利用後にCloseする。
 - 外部レスポンスの並列配列とnullをそのまま保持する。天気コード変換・日付や配列の整合性検証は後述の変換処理で行う。
 - `Forecast.Daily`は値型とする。`daily`自体の欠損と空オブジェクトは区別せず、後続の配列の整合性検証で不足を検出する。配列内の気温・湿度・天気コードはnullと0を区別するためポインターを使う。
-- テストは外部APIへ接続せず、HTTP Transportを差し替えて正常系（リクエスト内容・数値・欠損値）、HTTPエラー、JSON解析エラーの3ケースに絞り、各ケースでCloseも確認する。
+- テストは外部APIへ接続せず、HTTP Transportを差し替えて正常系（リクエスト内容・数値・欠損値）、HTTPエラー、JSON解析エラーと本文のCloseを確認する。通信計測はTLS中・接続再利用後のタイムアウト、本文読み取り失敗、コールバックの並行実行を確認する。
 
 ## 予報の変換・検証
 

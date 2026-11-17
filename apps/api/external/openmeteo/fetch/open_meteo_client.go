@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"strconv"
 	"time"
@@ -42,6 +43,8 @@ func (client *OpenMeteoClient) FetchForecast(ctx context.Context) (model.Forecas
 	query.Set("temperature_unit", "celsius")
 	query.Set("daily", "weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean")
 
+	trace := newRequestTrace()
+	ctx = httptrace.WithClientTrace(ctx, trace.hooks())
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, forecastURL+"?"+query.Encode(), nil)
 	if err != nil {
 		return model.Forecast{}, fmt.Errorf("create forecast request: %w", err)
@@ -49,19 +52,21 @@ func (client *OpenMeteoClient) FetchForecast(ctx context.Context) (model.Forecas
 
 	response, err := client.httpClient.Do(request)
 	if err != nil {
-		return model.Forecast{}, fmt.Errorf("fetch forecast: %w", err)
+		return model.Forecast{}, fmt.Errorf("fetch forecast: %w; network_trace={%s}", err, trace)
 	}
 	defer func() {
 		_ = response.Body.Close()
 	}()
+	trace.record(fmt.Sprintf("headers_received(status=%d)", response.StatusCode))
 
 	if response.StatusCode != http.StatusOK {
-		return model.Forecast{}, fmt.Errorf("fetch forecast: unexpected HTTP status %d", response.StatusCode)
+		return model.Forecast{}, fmt.Errorf("fetch forecast: unexpected HTTP status %d; network_trace={%s}", response.StatusCode, trace)
 	}
 
 	var forecast model.Forecast
+	trace.record("body_read_start")
 	if err := json.NewDecoder(response.Body).Decode(&forecast); err != nil {
-		return model.Forecast{}, fmt.Errorf("decode forecast response: %w", err)
+		return model.Forecast{}, fmt.Errorf("decode forecast response: %w; network_trace={%s}", err, trace)
 	}
 
 	return forecast, nil

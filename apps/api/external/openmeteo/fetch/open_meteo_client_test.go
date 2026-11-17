@@ -2,8 +2,10 @@ package fetch
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"strings"
 	"testing"
 )
@@ -109,9 +111,108 @@ func TestFetchForecast_ResponseErrors(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Errorf("error = %v, want %q", err, test.want)
 			}
+			if err == nil || !strings.Contains(err.Error(), "network_trace={total=") {
+				t.Errorf("error = %v, want network trace", err)
+			}
 			if !body.closed {
 				t.Error("response body was not closed")
 			}
 		})
+	}
+}
+
+func TestFetchForecast_TimeoutIncludesNetworkTrace(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		events  func(*httptrace.ClientTrace)
+		want    []string
+		missing []string
+	}{
+		{
+			name: "TLSHandshake",
+			events: func(trace *httptrace.ClientTrace) {
+				trace.DNSStart(httptrace.DNSStartInfo{Host: "api.open-meteo.com"})
+				trace.DNSDone(httptrace.DNSDoneInfo{})
+				trace.ConnectStart("tcp", "192.0.2.1:443")
+				trace.ConnectDone("tcp", "192.0.2.1:443", nil)
+				trace.TLSHandshakeStart()
+			},
+			want:    []string{"dns_start(api.open-meteo.com)@", "dns_done(ok)@", "connect_done(tcp 192.0.2.1:443)(ok)@", "tls_start@"},
+			missing: []string{"tls_done", "request_written"},
+		},
+		{
+			name: "ResponseOnReusedConnection",
+			events: func(trace *httptrace.ClientTrace) {
+				trace.GotConn(httptrace.GotConnInfo{Reused: true})
+				trace.WroteRequest(httptrace.WroteRequestInfo{})
+			},
+			want:    []string{"got_conn(reused=true)@", "request_written(ok)@"},
+			missing: []string{"dns_start", "tls_start", "first_response_byte"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			// Arrange
+			client := NewClient()
+			client.httpClient.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+				trace := httptrace.ContextClientTrace(request.Context())
+				if trace == nil {
+					t.Fatal("request has no HTTP trace")
+				}
+				test.events(trace)
+				return nil, context.DeadlineExceeded
+			})
+
+			// Act
+			_, err := client.FetchForecast(context.Background())
+
+			// Assert
+			if !errors.Is(err, context.DeadlineExceeded) {
+				t.Fatalf("error = %v, want context.DeadlineExceeded", err)
+			}
+			for _, want := range append(test.want, "network_trace={total=", "ms events=[") {
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("error = %v, want %q", err, want)
+				}
+			}
+			for _, missing := range test.missing {
+				if strings.Contains(err.Error(), missing) {
+					t.Errorf("error = %v, unexpected event %q", err, missing)
+				}
+			}
+		})
+	}
+}
+
+type failingReader struct {
+	err error
+}
+
+func (reader failingReader) Read([]byte) (int, error) {
+	return 0, reader.err
+}
+
+func TestFetchForecast_BodyReadFailureIncludesNetworkTrace(t *testing.T) {
+	// Arrange
+	body := &trackingBody{Reader: failingReader{err: context.DeadlineExceeded}}
+	client := NewClient()
+	client.httpClient.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		httptrace.ContextClientTrace(request.Context()).GotFirstResponseByte()
+		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+	})
+
+	// Act
+	_, err := client.FetchForecast(context.Background())
+
+	// Assert
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error = %v, want context.DeadlineExceeded", err)
+	}
+	for _, want := range []string{"decode forecast response", "first_response_byte@", "headers_received(status=200)@", "body_read_start@"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error = %v, want %q", err, want)
+		}
+	}
+	if !body.closed {
+		t.Error("response body was not closed")
 	}
 }
