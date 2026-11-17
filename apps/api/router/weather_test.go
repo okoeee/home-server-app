@@ -44,6 +44,7 @@ func newWeatherTestRouter(getter handler.WeatherForecastGetter) *gin.Engine {
 		handler.NewDailyPriceChangeHandler(priceChangeCalculatorStub{}),
 		handler.NewDailyVolumeRatioHandler(volumeRatioCalculatorStub{}),
 		handler.NewWeatherHandler(getter),
+		handler.NewServerMetricsHandler(serverMetricsStub{}),
 	)
 }
 

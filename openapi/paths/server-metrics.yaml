@@ -1,0 +1,39 @@
+get:
+  operationId: getServerMetrics
+  summary: ラズパイ本体の現在のメトリクスを取得する
+  description: |
+    ラズパイ1台を対象に、Prometheusで収集したCPU・メモリ使用率を返す。
+    CPU使用率は直近1分の全コア平均。コンテナ単位の使用率や履歴は返さない。
+    パラメーターは不要。リクエストごとにPrometheusへ問い合わせ、Go側ではキャッシュしない。
+    欠損した値を0で補完しない。
+  responses:
+    '200':
+      description: CPU・メモリ使用率を取得できた。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/server-metrics.yaml#/ServerMetricsResponse'
+    '502':
+      description: Prometheusへの通信失敗・タイムアウト・クエリエラー、または不正な応答。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            message: サーバーのメトリクスを取得できませんでした
+    '503':
+      description: Node Exporterの収集失敗・停止、またはCPU・メモリのデータ不足。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            message: サーバーのメトリクスを取得できませんでした
+    '500':
+      description: 予期しない内部エラー。内部エラーの詳細は公開しない。
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            message: サーバーのメトリクスを取得できませんでした

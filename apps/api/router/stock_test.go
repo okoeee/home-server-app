@@ -47,6 +47,7 @@ func TestGetDailyPrices_Scenarios(t *testing.T) {
 				handler.NewDailyPriceChangeHandler(priceChangeCalculatorStub{}),
 				handler.NewDailyVolumeRatioHandler(volumeRatioCalculatorStub{}),
 				handler.NewWeatherHandler(weatherForecastStub{}),
+				handler.NewServerMetricsHandler(serverMetricsStub{}),
 			)
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, "/v1/stocks/13010/prices", nil)

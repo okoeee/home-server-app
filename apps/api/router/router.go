@@ -11,6 +11,7 @@ func NewRouter(
 	dailyPriceChangeHandler *handler.DailyPriceChangeHandler,
 	dailyVolumeRatioHandler *handler.DailyVolumeRatioHandler,
 	weatherHandler *handler.WeatherHandler,
+	serverMetricsHandler *handler.ServerMetricsHandler,
 ) *gin.Engine {
 	router := gin.Default()
 
@@ -18,6 +19,7 @@ func NewRouter(
 
 	v1 := router.Group("/v1")
 	v1.GET("/weather/forecast", weatherHandler.GetForecast)
+	v1.GET("/server/metrics", serverMetricsHandler.GetMetrics)
 	v1.GET("/daily-price-changes/latest", dailyPriceChangeHandler.GetLatestDailyPriceChanges)
 	v1.GET("/daily-volume-ratios", dailyVolumeRatioHandler.GetDailyVolumeRatios)
 

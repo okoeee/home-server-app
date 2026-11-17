@@ -199,6 +199,26 @@ type PingResponse struct {
 	Message string `json:"message"`
 }
 
+// ServerMetricsResponse defines model for ServerMetricsResponse.
+type ServerMetricsResponse struct {
+	// CpuUsagePercent 直近1分の全CPUコアの平均使用率（%）。アイドル時間の割合を100%から引く。
+	//
+	// Example: 12.5
+	CpuUsagePercent float64 `json:"cpu_usage_percent"`
+
+	// FetchedAt Prometheusへ問い合わせた基準日時。RFC 3339形式でオフセットを含む。
+	// 元データの収集時刻ではない。各クエリはこの日時を共通の評価時刻にする。
+	//
+	//
+	// Example: 2026-11-07T09:00:00+09:00
+	FetchedAt time.Time `json:"fetched_at"`
+
+	// MemoryUsagePercent 本体のメモリ使用率（%）。総量に対する利用可能量（MemAvailable）の割合を100%から引く。
+	//
+	// Example: 43.2
+	MemoryUsagePercent float64 `json:"memory_usage_percent"`
+}
+
 // TradeDate 取引日（YYYY-MM-DD）。JSON表現に合わせGoでも文字列を使用する。
 //
 // Example: 2026-10-19

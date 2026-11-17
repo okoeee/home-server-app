@@ -17,7 +17,7 @@
   } = $props()
 </script>
 
-<section class="min-w-0 w-full max-w-3xl" aria-labelledby="stocks-heading" aria-busy={loading}>
+<section class="min-w-0 w-full" aria-labelledby="stocks-heading" aria-busy={loading}>
   <DashboardCard
     headingId="stocks-heading"
     title="株価の騰落率"

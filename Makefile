@@ -6,7 +6,7 @@
 .NOTPARALLEL:
 
 dev: generate-sqlc generate-openapi
-	docker compose up -d --build web
+	docker compose --profile monitoring up -d --build web prometheus
 
 generate-sqlc:
 	docker compose run --rm sqlc generate

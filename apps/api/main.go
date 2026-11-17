@@ -4,12 +4,14 @@ import (
 	"api/db"
 	"api/external/openmeteo"
 	openmeteofetch "api/external/openmeteo/fetch"
+	"api/external/prometheus"
 	"api/handler"
 	"api/infrastructure/mysql"
 	"api/router"
 	"api/usecase/dailyprice"
 	"api/usecase/weather"
 	"log"
+	"os"
 	"time"
 )
 
@@ -40,12 +42,19 @@ func main() {
 	forecastReader := openmeteo.NewForecastReader(weatherClient, time.Now)
 	forecastCache := weather.NewForecastCache(forecastReader, time.Now)
 	weatherHandler := handler.NewWeatherHandler(forecastCache)
+	prometheusURL := os.Getenv("PROMETHEUS_URL")
+	if prometheusURL == "" {
+		prometheusURL = "http://localhost:9090"
+	}
+	metricsReader := prometheus.NewMetricsReader(prometheus.NewClient(prometheusURL), time.Now)
+	serverMetricsHandler := handler.NewServerMetricsHandler(metricsReader)
 
 	routerErr := router.NewRouter(
 		stockHandler,
 		dailyPriceChangeHandler,
 		dailyVolumeRatioHandler,
 		weatherHandler,
+		serverMetricsHandler,
 	).Run()
 
 	if routerErr != nil {
