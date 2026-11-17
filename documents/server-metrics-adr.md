@@ -1,8 +1,8 @@
 # ADR：ラズパイ本体のメトリクス取得
 
 - 日付：2026-11-03
-- 更新：2026-11-09（Go側の追加の鮮度チェックを削除）
-- 状態：採用。Go APIまで実装済み。画面表示は未実装。従来構成での実機収集は確認済みだが、今回のネットワーク変更後の本体情報の取得は実機で未確認
+- 更新：2026-11-17（CPU・メモリに限定した共通構成とmakeでの監視起動）
+- 状態：採用。Go APIとホームへの表示を実装済み。Macでは共通設定によるmakeの起動とメトリクスAPIの200応答を確認済み。現在の構成でのラズパイ実機の取得値・画面表示は未確認
 
 ## 背景
 
@@ -19,16 +19,16 @@ Node ExporterをDocker Composeで起動し、本体のメトリクスをHTTPの`
 | Node Exporter | 本体のCPU・メモリなどを取得して公開する       | 設定済み   |
 | Prometheus    | 定期収集・時系列保存・使用率の計算を行う       | 設定済み   |
 | Go API        | Prometheusへ問い合わせ、画面用のJSONへ変換する | 実装済み   |
-| Svelte        | 自作のサーバーカードに表示する                 | 後続の実装 |
+| Svelte        | 自作のサーバーカードに表示する                 | 実装済み   |
 
-問い合わせの流れは以下とする。Svelteからの表示は後続で追加する。矢印はリクエストの方向を示す。
+問い合わせの流れは以下とする。矢印はリクエストの方向を示す。
 
 ```text
-定期収集：Prometheus → Node Exporter → ラズパイ本体の情報
+定期収集：Prometheus → Node Exporter → LinuxのCPU・メモリ情報
 画面表示：Svelte → Go API → Prometheus
 ```
 
-自作の画面を利用するため、Grafanaは導入しない。メトリクスはPrometheus側で保存し、アプリのMySQLには保存しない。Svelteへの接続は後続で実装する。
+自作の画面を利用するため、Grafanaは導入しない。メトリクスはPrometheus側で保存し、アプリのMySQLには保存しない。
 
 ## 選定理由と比較
 
@@ -36,7 +36,7 @@ Node ExporterをDocker Composeで起動し、本体のメトリクスをHTTPの`
 |-----------------------------------------|---------------------------------------------------------------------------------|-----------------------------|
 | Goで`/proc`・`/sys`を直接読む           | 常駐ソフトを減らせるが、読み取りやCPU使用率の計算を自作する必要がある           | 採用しない                  |
 | Node ExporterをOSへ直接インストールする | ホストの情報を参照しやすいが、OS側に別のインストール・起動管理が必要            | Composeによる管理を優先する |
-| Node Exporterをコンテナで起動する       | 既存のComposeで管理でき、収集とアプリの責務を分けられる。ホスト参照の設定が必要 | 採用する                    |
+| Node Exporterをコンテナで起動する       | 既存のComposeで管理でき、収集とアプリの責務を分けられる。CPU・メモリはLinuxの`/proc`から取得する | 採用する                    |
 
 Node ExporterはLinuxホストの情報を公開するためのソフトで、CPU・メモリに対応するcollectorを備える。アプリ側でOS固有の計測処理を持たず、後からPrometheusによる収集につなげられるため選ぶ。[公式README](https://github.com/prometheus/node_exporter#collectors)
 
@@ -44,15 +44,17 @@ Node Exporter自体は履歴を保存しない。CPUの稼働時間は累積値�
 
 ## コンテナから本体を参照する方法
 
-CPU・メモリ情報は、本体の`/proc`を参照する。コンテナ化する場合は、コンテナ自身と本体の情報を混同しないようにする。
+CPU・メモリ情報は、コンテナから見えるLinuxの`/proc/stat`・`/proc/meminfo`を参照する。これらはコンテナのCPU・メモリ制限の使用量を表すものではない。ラズパイでは本体、MacのDocker DesktopではLinux VMの値を取得する。
 
-`compose.yaml`の`node_exporter`サービスで、[公式のDocker構成](https://github.com/prometheus/node_exporter#docker)を基に次を設定する。
+`compose.yaml`の`node_exporter`サービスで、[collectorの指定](https://github.com/prometheus/node_exporter#collectors)を使い、対象をCPU・メモリに限定する。
 
-- ホストのルートを`/host`へ読み取り専用でbind mountし、`--path.rootfs=/host`を指定する。
-- `--path.procfs=/host/proc`と`--path.sysfs=/host/sys`で、Node Exporterが使う本体の参照先を明示する。`pid: host`も維持する。
-- ネットワークはComposeのbridgeを利用する。ネットワーク関連のメトリクスはホストと一致する保証がないため、今回のAPIでは利用しない。
-- ホスト参照の設定はNode Exporterに限定し、Go APIのコンテナへ追加しない。
-- ホストの情報を広く参照するため、イメージはバージョンを固定する。`privileged`やDockerソケットのマウントは追加しない。
+- `--collector.disable-defaults`で既定のcollectorを無効にし、`--collector.cpu`と`--collector.meminfo`だけを有効にする。
+- 既定の`/proc`からCPU・メモリを読み取るため、ホストのbind mountや`pid: host`は追加しない。
+- ネットワークはComposeのbridgeを利用する。コンテナ単位やネットワーク・ディスクなどの収集は今回の対象に含めない。
+- Mac・ラズパイで同じCompose設定を使う。OS別の上書きファイルは作成しない。
+- イメージはバージョンを固定する。`privileged`やDockerソケットのマウントは追加しない。
+
+当初のホスト全体を参照する構成は、CPU・メモリだけの取得には不要だった。Macで利用できない`rslave`などを省き、現在の対象に必要な設定へ絞る。
 
 イメージは`quay.io/prometheus/node-exporter:v1.12.1`を使用する。[採用バージョンのリリース](https://github.com/prometheus/node_exporter/releases/tag/v1.12.1)
 
@@ -62,7 +64,7 @@ Node ExporterとPrometheusをAPIと同じComposeネットワークへ接続す�
 
 当初は両方をホストネットワークで起動していたが、ホストのループバックだけに待ち受けるPrometheusへAPIのコンテナから接続できなかったため変更した。収集先の変更に伴い、`instance`ラベルも`127.0.0.1:9100`から`node_exporter:9100`へ変わる。既存の履歴は削除せず、新しい系列のCPUサンプルがたまるまで1分程度待つ。
 
-通常の開発起動へ影響させないため、Composeの`monitoring`プロファイルで明示的に起動する設計とする。既存の`make`による開発環境起動には含めない。[Composeのプロファイル](https://docs.docker.com/compose/how-tos/profiles/)
+監視サービスはComposeの`monitoring`プロファイルで管理し、`make`の開発起動で有効にする。画面がメトリクスAPIを呼ぶため、通常の開発起動にもPrometheus・Node Exporterを含める。起動コマンドは`docker compose --profile monitoring up -d --build web prometheus`とし、依存するAPI・DB・Node Exporterも起動する。直接`docker compose up -d`を実行した場合は監視サービスを起動しない。[Composeのプロファイル](https://docs.docker.com/compose/how-tos/profiles/)
 
 ## 最初の確認範囲
 
@@ -74,7 +76,7 @@ Node ExporterとPrometheusをAPIと同じComposeネットワークへ接続す�
 
 MacのDocker DesktopはLinux VM上でコンテナを動かす。そのため、そこで参照できる情報をMac本体やラズパイの情報として扱わず、受け入れ確認はラズパイ実機で行う。[Docker Desktopの実行環境](https://docs.docker.com/desktop/features/vmm/)
 
-自作の画面とアラートは後続で扱う。画面向けAPIの仕様は以下で定義する。
+アラートは今回の対象に含めない。画面向けAPIの仕様は以下で定義する。
 
 ## 画面向けAPIの設計
 
@@ -122,13 +124,19 @@ CPUは「各コアの直近1分のアイドル時間の割合を平均し、100%
 - `domain/model/server_metrics.go`：画面向けの内部モデル。Prometheusのラベルや応答形式は持たない。
 - `handler/server_metrics.go`：Readerの呼び出しとOpenAPIのレスポンス・HTTPステータスへの変換。
 
-キャッシュなどのアプリ固有の処理はないため、呼び出しを中継するだけのUsecaseは追加しない。標準の`net/http`で問い合わせ、新しいライブラリは追加しない。`PROMETHEUS_URL`未指定でGoを直接起動した場合は`http://localhost:9090`へ接続する。複数クエリ全体のタイムアウトは10秒とする。画面への表示は後続で実装する。
+キャッシュなどのアプリ固有の処理はないため、呼び出しを中継するだけのUsecaseは追加しない。標準の`net/http`で問い合わせ、新しいライブラリは追加しない。`PROMETHEUS_URL`未指定でGoを直接起動した場合は`http://localhost:9090`へ接続する。複数クエリ全体のタイムアウトは10秒とする。
 
 Go側のテストでは正常系に加え、収集失敗・起動直後のデータ不足・不正な応答を確認する。ネットワーク変更後の本体情報の取得はラズパイ実機で確認する。
 
+### フロントの表示
+
+`api/server-metrics.ts`から`/api/v1/server/metrics`へ問い合わせ、OpenAPIで生成した`ServerMetricsResponse`をそのまま利用する。`App.svelte`が画面表示時に1回取得し、`ServerMetricsCard.svelte`へ結果・読み込み状態・エラーを渡す。自動更新は行わない。
+
+カードは既存の`DashboardCard`を使い、CPU・メモリ使用率を小数1桁の数値とバーで表示する。取得基準日時は日本時間で表示し、元データの収集時刻とは区別する。PCでは天気カードの隣、狭い画面では縦に配置する。読み込み中・取得失敗・データなしを表示し、サーバー情報の取得失敗で天気・株価の表示を妨げない。
+
 ## 実機での確認手順
 
-ラズパイへSSHで接続し、プロジェクトルートで[READMEの手順](../README.md#ラズパイ本体のメトリクス取得)に従って起動する。Prometheusの依存先としてNode Exporterも起動する。以降もラズパイ上で実行する。
+ラズパイへSSHで接続し、プロジェクトルートで[READMEの手順](../README.md#サーバーのメトリクス取得)に従って起動する。Prometheusの依存先としてNode Exporterも起動する。以降もラズパイ上で実行する。
 
 ```bash
 curl --fail --silent --show-error http://127.0.0.1:9100/metrics \
@@ -214,4 +222,6 @@ Go全体の`go test -race ./...`、フロントの型チェック、OpenAPI生�
 
 専用の一時Compose環境で、Node Exporter・Prometheus・GoのReaderとRouterを接続した。サービス名による収集と問い合わせで`200`、Node Exporter停止時に`503`、Prometheus停止時に`502`となることを確認した。既存のコンテナ・データは変更せず、一時環境は検証後に削除した。
 
-Docker DesktopではMacのルートにホストLinuxの`/proc`・`/sys`がなく、`rslave`もそのまま利用できなかったため、この検証時だけ参照先をコンテナ内の`/proc`・`/sys`へ切り替え、マウント伝播指定を外した。確認できたのはLinux VM上の収集とAPI接続であり、ラズパイ本体の取得値の確認ではない。従来構成での実機収集は利用者から確認済みだが、今回のマウント・ネットワーク変更後の取得値は実機で確認する。
+Macの一時コンテナで、ホストのマウント・PID共有なしにCPU・メモリの収集が成功することを確認した。コンテナを1 CPU・64 MiBに制限しても、取得値はLinux VMの10 CPU・約8.2 GBのメモリ総量だった。確認できたのはLinux VM上の取得値であり、ラズパイ本体の取得値は実機で確認する。
+
+共通設定を反映したMac上で`make`を実行し、sqlc・OpenAPI生成、ビルド、5サービスの起動まで成功した。Prometheusの準備完了と、Caddy経由の`/api/v1/server/metrics`が200でCPU・メモリ使用率を返すことも確認した。
