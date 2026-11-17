@@ -16,7 +16,7 @@ echo "GitHubから最新版を取得します..."
 git pull --ff-only origin main
 
 echo "Dockerイメージをビルドして起動します..."
-docker compose up --build -d
+docker compose --profile monitoring up --build -d
 
 echo "APIの起動を確認します..."
 curl \

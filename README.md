@@ -85,6 +85,7 @@ Raspberry Pi 5で動かす自宅サーバー用アプリケーションです。
 │   ├── stock-price-design.md
 │   ├── testing-policy.md
 │   ├── troubleshooting/
+│   │   ├── api-502-after-deploy.md
 │   │   └── weather-api-dns.md
 │   ├── ui-library-comparison.md
 │   └── weather-design.md
@@ -319,3 +320,5 @@ mainブランチへマージした変更は、プロジェクトルートで次�
 ```bash
 ./scripts/deploy.sh
 ```
+
+アプリと監視サービスをまとめてビルド・起動します。監視コンテナの設定変更も反映します。起動直後にメトリクスAPIが503になる場合は、1分程度待って画面を再読み込みします。リリース後の502の切り分けは[トラブルシューティング](documents/troubleshooting/api-502-after-deploy.md)を参照してください。
