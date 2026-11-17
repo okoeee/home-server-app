@@ -114,9 +114,11 @@ Dockerを起動し、プロジェクトルートにDB設定を含む`.env`を用
 make
 ```
 
-sqlc生成、OpenAPI用依存のインストールとGo・TypeScriptモデル生成、Dockerイメージのビルドと`web`・`api`・`db`の起動を順に実行します。途中で失敗した場合は後続の処理を実行しません。Go・Node.js・npmはホスト側にも必要で、初回の依存取得にはネットワーク接続を使用します。
+sqlc生成、OpenAPI用依存のインストールとGo・TypeScriptモデル生成、Dockerイメージのビルドと`web`・`api`・`db`・`prometheus`・`node_exporter`の起動を順に実行します。途中で失敗した場合は後続の処理を実行しません。Go・Node.js・npmはホスト側にも必要で、初回の依存取得にはネットワーク接続を使用します。
 
-起動後は`http://localhost:3000`で画面を確認できます。既存のDBデータは保持しますが、株価データのインポートは実行しません。停止は`docker compose stop`です。`make dev`も同じ処理を実行します。
+起動後は`http://localhost:3000`で画面を確認できます。既存のDBデータは保持しますが、株価データのインポートは実行しません。停止は`docker compose --profile monitoring stop`です。`make dev`も同じ処理を実行します。
+
+監視はMac・ラズパイ共通の設定で起動します。MacではDocker DesktopのLinux VMのCPU・メモリ使用率です。CPUの計算には複数回の収集が必要なため、初回は1分程度待ってから画面を開いてください。起動直後に503が表示された場合は、少し待って再読み込みします。
 
 APIのコードを変更した場合は、`docker compose up -d --build api`で再ビルド・起動して変更を反映します。
 
@@ -170,20 +172,20 @@ curl http://localhost:3000/api/ping
 
 DockerfileはNode.jsで本番用ファイルをビルドし、生成された`dist/`と`Caddyfile`をCaddyイメージへコピーします。HTTPの80番ポートから配信し、`/api/*`は`/api`を除いて`api:8080`へ転送します。起動コマンドはCaddy公式イメージのものを使用します。APIはMySQLのヘルスチェック成功後に起動します。`web`はAPIの起動後に開始しますが、APIの準備完了までは待ちません。
 
-## ラズパイ本体のメトリクス取得
+## サーバーのメトリクス取得
 
-ラズパイにSSHで接続し、プロジェクトルートで実行します。
+`make`では監視サービスも起動します。監視だけを起動・確認する場合は、Mac・ラズパイ共通でプロジェクトルートから実行します。
 
 ```bash
 docker compose --profile monitoring up -d prometheus
 curl --fail --silent --show-error http://127.0.0.1:9090/-/ready
 ```
 
-Prometheusと依存先のNode Exporterを起動します。起動直後の準備が完了していなければ、少し待って確認コマンドを再実行します。`monitoring`プロファイルに分けているため、通常の`make`や`docker compose up -d`では起動しません。
+Prometheusと依存先のNode Exporterを起動します。起動直後の準備が完了していなければ、少し待って確認コマンドを再実行します。`make`は`monitoring`プロファイルを有効にします。直接`docker compose up -d`を実行した場合は、監視サービスを起動対象に含めません。
 
-ホストへのポート公開はラズパイ自身の`127.0.0.1:9090`（Prometheus）と`127.0.0.1:9100`（Node Exporter）に限定しています。コンテナ間はComposeのサービス名で接続し、APIの接続先はCompose内で`PROMETHEUS_URL=http://prometheus:9090`に設定しています。Goを直接起動する場合の既定値は`http://localhost:9090`です。
+ホストへのポート公開は実行ホストの`127.0.0.1:9090`（Prometheus）と`127.0.0.1:9100`（Node Exporter）に限定しています。コンテナ間はComposeのサービス名で接続し、APIの接続先はCompose内で`PROMETHEUS_URL=http://prometheus:9090`に設定しています。Goを直接起動する場合の既定値は`http://localhost:9090`です。
 
-監視構成はLinuxのラズパイ用です。MacのDocker Desktopでは参照先やマウント仕様が異なるため、そのままの構成で実機の検証はできません。通常のMac開発では`monitoring`を起動する必要はありません。
+Node ExporterはCPU・メモリ用のcollectorだけを有効にし、コンテナから見えるLinuxの`/proc`を参照します。ホストのマウントやPID共有、OS別の設定ファイルは不要です。ラズパイでは本体、MacではDocker DesktopのLinux VMの値となるため、ラズパイ本体の取得値は実機で確認します。
 
 今回のネットワーク変更を既存環境へ反映する場合は、プロジェクトルートで次を実行します。
 
