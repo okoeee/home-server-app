@@ -3,9 +3,15 @@
   import House from '@lucide/svelte/icons/house'
   import { fetchLatestDailyPriceChanges } from './api/daily-price-changes'
   import { fetchWeatherForecast } from './api/weather-forecast'
+  import { fetchServerMetrics } from './api/server-metrics'
   import DailyPriceChangeCard from './components/DailyPriceChangeCard.svelte'
   import WeatherForecastCard from './components/WeatherForecastCard.svelte'
-  import type { DailyPriceChangeResponse, WeatherForecastResponse } from './api/generated/schema'
+  import ServerMetricsCard from './components/ServerMetricsCard.svelte'
+  import type {
+    DailyPriceChangeResponse,
+    WeatherForecastResponse,
+    ServerMetricsResponse,
+  } from './api/generated/schema'
   import { selectTopDailyPriceChanges } from './models/daily-price-change'
 
   let date = $state<string | null>(null)
@@ -15,6 +21,19 @@
   let forecast = $state<WeatherForecastResponse | null>(null)
   let weatherLoading = $state(true)
   let weatherError = $state('')
+  let metrics = $state<ServerMetricsResponse | null>(null)
+  let metricsLoading = $state(true)
+  let metricsError = $state('')
+
+  async function loadMetrics() {
+    try {
+      metrics = await fetchServerMetrics()
+    } catch (cause) {
+      metricsError = cause instanceof Error ? cause.message : 'サーバー情報を取得できませんでした。'
+    } finally {
+      metricsLoading = false
+    }
+  }
 
   async function loadWeather() {
     try {
@@ -41,6 +60,7 @@
   onMount(() => {
     void loadChanges()
     void loadWeather()
+    void loadMetrics()
   })
 </script>
 
@@ -60,7 +80,10 @@
 <main
   class="mx-auto box-border grid w-full min-w-0 max-w-7xl grid-cols-1 gap-6 px-5 py-7 sm:px-8 sm:py-9"
 >
-  <WeatherForecastCard {forecast} loading={weatherLoading} error={weatherError} />
+  <div class="grid min-w-0 w-full max-w-4xl grid-cols-1 items-start gap-6 md:grid-cols-2">
+    <WeatherForecastCard {forecast} loading={weatherLoading} error={weatherError} />
+    <ServerMetricsCard {metrics} loading={metricsLoading} error={metricsError} />
+  </div>
 
   <DailyPriceChangeCard {date} {changes} {loading} {error} />
 </main>
