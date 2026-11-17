@@ -30,7 +30,7 @@
   {/if}
 {/snippet}
 
-<section class="min-w-0 w-full max-w-md" aria-labelledby="server-heading" aria-busy={loading}>
+<section class="min-w-0 w-full" aria-labelledby="server-heading" aria-busy={loading}>
   <DashboardCard
     headingId="server-heading"
     title="サーバー"

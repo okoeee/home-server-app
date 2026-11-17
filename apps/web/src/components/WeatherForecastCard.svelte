@@ -18,7 +18,7 @@
   } = $props()
 </script>
 
-<section class="min-w-0 w-full max-w-md" aria-labelledby="weather-heading" aria-busy={loading}>
+<section class="min-w-0 w-full" aria-labelledby="weather-heading" aria-busy={loading}>
   <DashboardCard
     headingId="weather-heading"
     title={`${forecast?.location_name ?? '東京都'}の天気`}

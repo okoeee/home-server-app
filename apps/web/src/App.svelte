@@ -77,13 +77,13 @@
   </div>
 </header>
 
-<main
-  class="mx-auto box-border grid w-full min-w-0 max-w-7xl grid-cols-1 gap-6 px-5 py-7 sm:px-8 sm:py-9"
->
-  <div class="grid min-w-0 w-full max-w-4xl grid-cols-1 items-start gap-6 md:grid-cols-2">
-    <WeatherForecastCard {forecast} loading={weatherLoading} error={weatherError} />
-    <ServerMetricsCard {metrics} loading={metricsLoading} error={metricsError} />
-  </div>
+<main class="mx-auto box-border w-full min-w-0 max-w-7xl px-5 py-7 sm:px-8 sm:py-9">
+  <div class="grid min-w-0 w-full max-w-4xl grid-cols-1 gap-6">
+    <div class="grid min-w-0 grid-cols-1 items-start gap-6 md:grid-cols-2">
+      <WeatherForecastCard {forecast} loading={weatherLoading} error={weatherError} />
+      <ServerMetricsCard {metrics} loading={metricsLoading} error={metricsError} />
+    </div>
 
-  <DailyPriceChangeCard {date} {changes} {loading} {error} />
+    <DailyPriceChangeCard {date} {changes} {loading} {error} />
+  </div>
 </main>
