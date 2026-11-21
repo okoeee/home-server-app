@@ -50,3 +50,15 @@ test('サーバー情報APIへの通信失敗を呼び出し元へ返す', async
   // Assert
   await assert.rejects(result, (error) => error === failure)
 })
+
+test('サーバー情報の通信にキャンセル用のsignalを渡す', async (t) => {
+  // Arrange
+  const controller = new AbortController()
+  const fetchMock = t.mock.method(globalThis, 'fetch', async (_url, _options) => Response.json({}))
+
+  // Act
+  await fetchServerMetrics(controller.signal)
+
+  // Assert
+  assert.equal(fetchMock.mock.calls[0].arguments[1]?.signal, controller.signal)
+})

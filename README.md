@@ -119,7 +119,7 @@ sqlc生成、OpenAPI用依存のインストールとGo・TypeScriptモデル生
 
 起動後は`http://localhost:3000`で画面を確認できます。既存のDBデータは保持しますが、株価データのインポートは実行しません。停止は`docker compose --profile monitoring stop`です。`make dev`も同じ処理を実行します。
 
-監視はMac・ラズパイ共通の設定で起動します。MacではDocker DesktopのLinux VMのCPU・メモリ使用率です。CPUの計算には複数回の収集が必要なため、初回は1分程度待ってから画面を開いてください。起動直後に503が表示された場合は、少し待って再読み込みします。
+監視はMac・ラズパイ共通の設定で起動します。MacではDocker DesktopのLinux VMのCPU・メモリ使用率です。CPUの計算には複数回の収集が必要なため、初回は1分程度待ってから画面を開いてください。起動直後は503が返る場合があります。
 
 APIのコードを変更した場合は、`docker compose up -d --build api`で再ビルド・起動して変更を反映します。
 

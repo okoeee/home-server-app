@@ -13,6 +13,7 @@
     ServerMetricsResponse,
   } from './api/generated/schema'
   import { selectTopDailyPriceChanges } from './models/daily-price-change'
+  import { startServerMetricsPolling } from './lib/server-metrics-polling'
 
   let date = $state<string | null>(null)
   let changes = $state<DailyPriceChangeResponse[]>([])
@@ -25,13 +26,17 @@
   let metricsLoading = $state(true)
   let metricsError = $state('')
 
-  async function loadMetrics() {
+  async function loadMetrics(signal: AbortSignal) {
     try {
-      metrics = await fetchServerMetrics()
+      const result = await fetchServerMetrics(signal)
+      if (signal.aborted) return
+      metrics = result
+      metricsError = ''
     } catch (cause) {
+      if (signal.aborted) return
       metricsError = cause instanceof Error ? cause.message : 'サーバー情報を取得できませんでした。'
     } finally {
-      metricsLoading = false
+      if (!signal.aborted) metricsLoading = false
     }
   }
 
@@ -60,7 +65,7 @@
   onMount(() => {
     void loadChanges()
     void loadWeather()
-    void loadMetrics()
+    return startServerMetricsPolling(loadMetrics)
   })
 </script>
 
